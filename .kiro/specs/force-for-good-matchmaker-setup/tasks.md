@@ -20,10 +20,10 @@ Scaffold the complete Maven project structure for the Connecting-Dots Spring Boo
 
 - [x] 3. Create pom.xml
   - Declare `org.springframework.boot:spring-boot-starter-parent:3.3.4` as parent
-  - Set `<java.version>21</java.version>` (Java 21 LTS — downgraded from 25 for Lombok compatibility)
-  - Add `maven-compiler-plugin` with `<release>21</release>` and `annotationProcessorPaths` for `lombok:1.18.34`
-  - Add dependencies: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `postgresql` (runtime), `spring-boot-starter-data-redis`, `lombok` (optional), `spring-boot-starter-test` (test)
-  - Add `spring-boot-maven-plugin` with Lombok exclusion
+  - Set `<java.version>21</java.version>` (Java 21 LTS — language target pinned for compatibility with JDK 25 runtime)
+  - Add `maven-compiler-plugin` with `<release>21</release>`
+  - Add dependencies: `spring-boot-starter-web`, `spring-boot-starter-data-jpa`, `postgresql` (runtime), `spring-boot-starter-data-redis`, `spring-boot-starter-validation`, `spring-boot-starter-test` (test)
+  - Add `spring-boot-maven-plugin`
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8_
 
 - [x] 4. Create application entry point
@@ -53,9 +53,8 @@ Scaffold the complete Maven project structure for the Connecting-Dots Spring Boo
     - Add comment: `// Feature: force-for-good-matchmaker-setup, Example 4: Spring application context loads successfully`
     - _Requirements: 3.3_
 
-- [x] 7. Add spring-dotenv dependency to pom.xml and configure Lombok annotation processor
+- [x] 7. Add spring-dotenv dependency to pom.xml
   - Added `me.paulschwarz:spring-dotenv:3.0.0` as a compile-scoped dependency in `pom.xml`
-  - Added `maven-compiler-plugin` with `annotationProcessorPaths` for `lombok:1.18.34` — required for Java 25 to process `@Builder`, `@Data`, etc.
   - _Requirements: 2.9_
 
 - [x] 8. Rewrite application.properties to use env-var placeholders
