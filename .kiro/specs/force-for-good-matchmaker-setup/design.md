@@ -2,7 +2,7 @@
 
 ## Overview
 
-Connecting-Dots is a Spring Boot 3 microservice written in Java 21 (LTS), built with Maven and compiled targeting Java 21 for maximum library compatibility. The JDK 25 environment is used to run the build, but the language level is pinned to 21 to avoid incompatibilities with annotation processors such as Lombok.: Maven project scaffold, build configuration (pom.xml), application entry point, environment-variable-based configuration for a 100% serverless infrastructure stack (Neon DB, Upstash Redis, Groq LLM API), the domain layer (JPA entity, enum, repository), an AI integration service backed by the Groq LLM API, and a REST API for NGO problem submission and retrieval.
+Connecting-Dots is a Spring Boot 3 microservice written in Java 21 (LTS), built with Maven and compiled targeting Java 21 for maximum library compatibility. The JDK 25 environment is used to run the build, but the language level is pinned to 21 to avoid incompatibilities with annotation processors. This spec covers: Maven project scaffold, build configuration (pom.xml), application entry point, environment-variable-based configuration for a 100% serverless infrastructure stack (Neon DB, Upstash Redis, Groq LLM API), the domain layer (JPA entity, enum, repository), an AI integration service backed by the Groq LLM API, and a REST API for NGO problem submission and retrieval.
 
 The service follows a conventional layered Spring Boot architecture. Credentials are never hard-coded — all secrets are loaded from a `.env` file at startup via `spring-dotenv`.
 
@@ -99,7 +99,7 @@ Dependencies:
 | `spring-boot-starter-data-jpa` | compile | Spring Data JPA + Hibernate ORM |
 | `org.postgresql:postgresql` | runtime | JDBC driver for Neon DB (PostgreSQL) |
 | `spring-boot-starter-data-redis` | compile | Spring Data Redis (Lettuce, TLS) |
-| `org.projectlombok:lombok` | optional | Compile-time annotation processing |
+| `spring-boot-starter-validation` | compile | Bean Validation (`@NotBlank`, `@Valid`) |
 | `me.paulschwarz:spring-dotenv:3.0.0` | compile | Loads `.env` into Spring Environment |
 | `spring-boot-starter-test` | test | JUnit 5, Mockito, AssertJ |
 
@@ -111,26 +111,11 @@ Plugin:
     <artifactId>maven-compiler-plugin</artifactId>
     <configuration>
         <release>21</release>
-        <annotationProcessorPaths>
-            <path>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>1.18.34</version>
-            </path>
-        </annotationProcessorPaths>
     </configuration>
 </plugin>
 <plugin>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-maven-plugin</artifactId>
-    <configuration>
-        <excludes>
-            <exclude>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-            </exclude>
-        </excludes>
-    </configuration>
 </plugin>
 ```
 
@@ -198,14 +183,9 @@ public enum TechCategory {
 package com.connectingdots.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class NgoProblemStatement {
 
     @Id
@@ -223,8 +203,21 @@ public class NgoProblemStatement {
     @Enumerated(EnumType.STRING)
     private TechCategory techCategory;
 
-    @Builder.Default
     private String status = "OPEN";
+
+    public NgoProblemStatement() {}
+
+    public NgoProblemStatement(UUID id, String ngoName, String rawDescription,
+                                String structuredProblem, TechCategory techCategory, String status) {
+        this.id = id;
+        this.ngoName = ngoName;
+        this.rawDescription = rawDescription;
+        this.structuredProblem = structuredProblem;
+        this.techCategory = techCategory;
+        this.status = status;
+    }
+
+    // standard getters and setters for all fields
 }
 ```
 
@@ -254,7 +247,7 @@ Request body (JSON):
 
 ```json
 {
-  "model": "llama3-8b-8192",
+  "model": "llama-3.1-8b-instant",
   "messages": [
     {
       "role": "system",
@@ -355,7 +348,7 @@ The structural and configuration criteria (requirements 1–7, 9.1) are point-in
 
 ### Property 1: Groq request structure is always correct
 
-*For any* valid `ngoName` and `rawDescription`, every call to `processAndSaveProblem` must produce an outbound HTTP POST to `https://api.groq.com/openai/v1/chat/completions` with model `llama3-8b-8192`, an `Authorization: Bearer` header containing the configured API key, and a system message containing the Business Analyst prompt.
+*For any* valid `ngoName` and `rawDescription`, every call to `processAndSaveProblem` must produce an outbound HTTP POST to `https://api.groq.com/openai/v1/chat/completions` with model `llama-3.1-8b-instant`, an `Authorization: Bearer` header containing the configured API key, and a system message containing the Business Analyst prompt.
 
 **Validates: Requirements 8.2, 8.3, 8.4**
 
@@ -401,7 +394,7 @@ The four standard Maven source directories and both wrapper scripts (`mvnw`, `mv
 
 #### Example 2: POM declares correct parent, Java version, all dependencies, and plugin
 
-Parsing `pom.xml` confirms: parent `spring-boot-starter-parent:3.3.x`, `<java.version>25</java.version>`, all eight runtime/compile dependencies (including `me.paulschwarz:spring-dotenv:3.0.0`), and `spring-boot-maven-plugin`.
+Parsing `pom.xml` confirms: parent `spring-boot-starter-parent:3.3.x`, `<java.version>21</java.version>`, all runtime/compile dependencies (including `me.paulschwarz:spring-dotenv:3.0.0` and `spring-boot-starter-validation`), and `spring-boot-maven-plugin`.
 
 **Validates: Requirements 2.1–2.9**
 
@@ -425,7 +418,7 @@ Loading `application.properties` confirms all DataSource, JPA, Redis, and Groq k
 
 #### Example 6: Domain layer structure is correct
 
-Reflection confirms: `TechCategory` has exactly four constants; `NgoProblemStatement` carries `@Entity`, `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`, `@Builder`, has an `id` field of type `UUID` with `@Id` and `@GeneratedValue(strategy = GenerationType.UUID)`, a `rawDescription` and `structuredProblem` with `@Column(columnDefinition = "TEXT")`, a `techCategory` with `@Enumerated(EnumType.STRING)`, and a `status` field; `NgoProblemRepository` extends `JpaRepository<NgoProblemStatement, UUID>` and declares `findByStatus`.
+Reflection confirms: `TechCategory` has exactly four constants; `NgoProblemStatement` carries `@Entity`, has an `id` field of type `UUID` with `@Id` and `@GeneratedValue(strategy = GenerationType.UUID)`, a `rawDescription` and `structuredProblem` with `@Column(columnDefinition = "TEXT")`, a `techCategory` with `@Enumerated(EnumType.STRING)`, a `status` field with default `"OPEN"`, a no-args constructor, a full-args constructor, and standard getters/setters; `NgoProblemRepository` extends `JpaRepository<NgoProblemStatement, UUID>` and declares `findByStatus`.
 
 **Validates: Requirements 7.1–7.9**
 

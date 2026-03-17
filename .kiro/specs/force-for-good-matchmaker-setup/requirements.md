@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Connecting-Dots is a Spring Boot 3 backend microservice built with Java 25 and Maven. This spec covers the full initial setup: scaffolding the Maven project structure, configuring the build descriptor (pom.xml) with required dependencies, creating the Spring Boot application entry point, configuring a 100% serverless infrastructure stack (Neon DB, Upstash Redis, Groq LLM API) via environment variables loaded from a `.env` file, defining the domain layer (JPA entity, enum, repository), implementing an AI integration service backed by the Groq LLM API, and exposing a REST API for NGO problem submission and retrieval.
+Connecting-Dots is a Spring Boot 3 backend microservice built with Java 21 (LTS), compiled on JDK 25, and built with Maven. This spec covers the full initial setup: scaffolding the Maven project structure, configuring the build descriptor (pom.xml) with required dependencies, creating the Spring Boot application entry point, configuring a 100% serverless infrastructure stack (Neon DB, Upstash Redis, Groq LLM API) via environment variables loaded from a `.env` file, defining the domain layer (JPA entity, enum, repository), implementing an AI integration service backed by the Groq LLM API (`llama-3.1-8b-instant`), and exposing a REST API for NGO problem submission and retrieval.
 
 ## Glossary
 
@@ -45,14 +45,14 @@ Connecting-Dots is a Spring Boot 3 backend microservice built with Java 25 and M
 #### Acceptance Criteria
 
 1. THE POM SHALL declare `org.springframework.boot:spring-boot-starter-parent` version `3.x` as the parent to inherit default dependency management.
-2. THE POM SHALL set the Java source and target compatibility to Java 25.
+2. THE POM SHALL set the Java source and target compatibility to Java 21 (LTS, compiled on JDK 25).
 3. THE POM SHALL declare a dependency on `spring-boot-starter-web` to enable the embedded web server and REST support.
 4. THE POM SHALL declare a dependency on `spring-boot-starter-data-jpa` to enable Spring Data JPA and Hibernate.
 5. THE POM SHALL declare a dependency on `org.postgresql:postgresql` as a runtime-scoped driver dependency.
 6. THE POM SHALL declare a dependency on `spring-boot-starter-data-redis` to enable Spring Data Redis support.
-7. THE POM SHALL declare a dependency on `org.projectlombok:lombok` with `optional` scope to enable compile-time code generation.
-8. THE POM SHALL include the `spring-boot-maven-plugin` so that the Matchmaker_Service can be packaged as an executable JAR.
-9. THE POM SHALL declare a dependency on `me.paulschwarz:spring-dotenv` so that Spring Boot automatically loads the `.env` file as environment properties at startup.
+7. THE POM SHALL include the `spring-boot-maven-plugin` so that the Matchmaker_Service can be packaged as an executable JAR.
+8. THE POM SHALL declare a dependency on `me.paulschwarz:spring-dotenv` so that Spring Boot automatically loads the `.env` file as environment properties at startup.
+9. THE POM SHALL declare a dependency on `spring-boot-starter-validation` to enable Bean Validation (`@NotBlank`, `@Valid`) on request DTOs.
 
 ---
 
@@ -117,7 +117,7 @@ Connecting-Dots is a Spring Boot 3 backend microservice built with Java 25 and M
 #### Acceptance Criteria
 
 1. THE Matchmaker_Service SHALL define a `TechCategory` enum in package `com.connectingdots.domain` with exactly the values `SOFTWARE_WEB`, `DATA_SCIENCE_ML`, `IOT_HARDWARE`, and `PROCESS_AUTOMATION`.
-2. THE Matchmaker_Service SHALL define an `NgoProblemStatement` JPA entity in package `com.connectingdots.domain` annotated with `@Entity`, `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`, and `@Builder`.
+2. THE Matchmaker_Service SHALL define an `NgoProblemStatement` JPA entity in package `com.connectingdots.domain` annotated with `@Entity`, with all fields exposed via standard getters and setters (plain POJO — no Lombok).
 3. THE NgoProblemStatement entity SHALL declare an `id` field of type `UUID` annotated with `@Id` and `@GeneratedValue(strategy = GenerationType.UUID)`.
 4. THE NgoProblemStatement entity SHALL declare a `ngoName` field of type `String`.
 5. THE NgoProblemStatement entity SHALL declare a `rawDescription` field of type `String` annotated with `@Column(columnDefinition = "TEXT")`.
@@ -136,7 +136,7 @@ Connecting-Dots is a Spring Boot 3 backend microservice built with Java 25 and M
 
 1. THE Matchmaker_Service SHALL define a `GroqAiService` Spring-managed component in package `com.connectingdots.service`.
 2. THE GroqAiService SHALL use Spring `RestClient` to POST requests to `https://api.groq.com/openai/v1/chat/completions`.
-3. THE GroqAiService SHALL use the model identifier `llama3-8b-8192` in every request sent to the Groq_API.
+3. THE GroqAiService SHALL use the model identifier `llama-3.1-8b-instant` in every request sent to the Groq_API.
 4. THE GroqAiService SHALL include a system prompt that instructs the LLM to act as a Business Analyst, parse the raw description, and return ONLY a JSON object with keys `structuredProblem` (a technical summary string) and `techCategory` (a string that exactly matches one of the TechCategory enum values).
 5. THE GroqAiService SHALL expose a `processAndSaveProblem(String ngoName, String rawDescription)` method that calls the Groq_API, maps the JSON response to an NgoProblemStatement, saves the entity via NgoProblemRepository, and returns the saved NgoProblemStatement.
 6. WHEN the Groq_API returns a `techCategory` value that does not match any TechCategory enum constant, THE GroqAiService SHALL throw an `IllegalArgumentException` with a descriptive message.
