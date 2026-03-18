@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import axios from 'axios'
+import apiClient from '../api/client'
 import { useProjects } from '../context/ProjectContext'
 
 interface ProblemResult {
@@ -34,15 +34,15 @@ export default function NgoDashboard() {
     setError(null)
     setResult(null)
     try {
-      const { data } = await axios.post<ProblemResult>(
-        'http://localhost:8080/api/v1/problems/submit',
-        { ngoName, rawDescription }
-      )
+      const { data } = await apiClient.post<ProblemResult>('/problems/submit', {
+        ngoName,
+        rawDescription,
+      })
       setResult(data)
       setNgoName('')
       setRawDescription('')
     } catch {
-      setError('Something went wrong. Make sure the backend is running.')
+      setError('Something went wrong. Make sure the backend is running and your .env is configured.')
     } finally {
       setLoading(false)
     }
@@ -161,7 +161,12 @@ export default function NgoDashboard() {
                 disabled={loading}
                 className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
               >
-                {loading ? 'Analysing with AI…' : 'Submit Problem'}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    AI is analyzing your problem…
+                  </span>
+                ) : 'Submit Problem'}
               </button>
             </form>
 
