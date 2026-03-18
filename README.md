@@ -1,94 +1,160 @@
-# Connecting-Dots: AI-Driven NGO Problem Structuring Engine
+# Connecting-Dots: AI-Driven NGO Problem Structuring Platform
 
 ![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen?style=flat-square&logo=springboot)
-![PostgreSQL](https://img.shields.io/badge/Neon%20DB-Serverless%20PostgreSQL-4169E1?style=flat-square&logo=postgresql)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Neon%20DB-Serverless%20PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq-llama--3.1--8b--instant-blueviolet?style=flat-square)
-![Maven](https://img.shields.io/badge/Maven-Wrapper-C71A36?style=flat-square&logo=apachemaven)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
 ---
 
-## Overview
+## Platform Overview
 
-**Connecting-Dots** is a production-ready Spring Boot 3 microservice that acts as an **automated Business Analyst** for NGOs. It accepts raw, unstructured problem descriptions submitted by non-profit organisations and uses the **Groq LLM API** (powered by `llama-3.1-8b-instant`) to parse, structure, and categorise them into a clean, queryable format — ready for matching with volunteer technologists.
+**Connecting-Dots** is a full-stack platform that acts as an **automated Business Analyst** for non-profit organisations. NGOs submit raw, unstructured problem descriptions through a React frontend. The Spring Boot backend forwards each submission to the **Groq LLM API** (`llama-3.1-8b-instant`), which parses the input and returns a precise technical summary alongside a strict technology category classification. The structured result is persisted to a **serverless PostgreSQL database** (Neon DB) and immediately surfaced to volunteer tech contributors browsing the live project feed — where they can discover, filter, and claim open challenges.
 
-The service eliminates the manual overhead of interpreting vague problem statements by applying Generative AI to produce a precise technical summary and a strict technology category classification, all persisted to a serverless PostgreSQL database.
+The platform eliminates the manual overhead of interpreting vague problem statements and removes the friction between NGOs with real-world challenges and developers who want to apply their skills meaningfully.
+
+```
+React Frontend (Vite · Tailwind · Framer Motion)
+        │
+        │  axios  →  POST /api/v1/problems/submit
+        │            GET  /api/v1/problems/open
+        ▼
+Spring Boot Backend  (Java 21 · Spring Web · Spring Data JPA)
+        │
+        ├──►  Groq API  (llama-3.1-8b-instant)
+        │         └── returns structuredProblem + techCategory
+        │
+        └──►  Neon DB  (Serverless PostgreSQL)
+                  └── persists NgoProblemStatement
+```
 
 ---
 
-## Architecture
+## Platform Preview
 
-```
-HTTP Client
-    │
-    ▼
-ProblemController  (/api/v1/problems)
-    │
-    ▼
-GroqAiService  ──────────────────────►  Groq API (llama-3.1-8b-instant)
-    │                                        │
-    │          ◄────── JSON response ────────┘
-    ▼
-NgoProblemRepository
-    │
-    ▼
-Neon DB (Serverless PostgreSQL)
-```
-
-Configuration is fully environment-driven — all secrets are loaded from a `.env` file at startup via `spring-dotenv`. No credentials are hard-coded.
+![Split Landing Page](assets/main.png)
+![NGO Registration](assets/nogregister.png)
+![NGO Dashboard](assets/ngodashboard.png)
+![Project Feed](assets/projectfeed.png)
+![Contributor View](assets/userregister.png)
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
+### Frontend
+
+| Technology | Role |
 |---|---|
-| Language | Java 21 (compiled with JDK 25) |
-| Framework | Spring Boot 3.3.4 |
-| REST | Spring Web (Embedded Tomcat) |
-| Persistence | Spring Data JPA + Hibernate |
-| Database | Neon DB (Serverless PostgreSQL) |
-| Cache / Session | Upstash Redis (Serverless, TLS) |
-| AI / LLM | Groq API — `llama-3.1-8b-instant` |
-| HTTP Client | Spring `RestClient` |
-| Config | `spring-dotenv` (.env loader) |
-| Build | Maven Wrapper (mvnw) |
-| Validation | Spring Boot Starter Validation |
+| React 18 + Vite 5 | UI framework and dev build tool |
+| Tailwind CSS 3 | Utility-first styling |
+| Framer Motion 11 | Page transitions and micro-animations |
+| Axios | HTTP client — communicates with the Spring Boot API |
+| React Router DOM v6 | Client-side routing |
+
+### Backend
+
+| Technology | Role |
+|---|---|
+| Java 21 (JDK 25 runtime) | Application language |
+| Spring Boot 3.3.4 | Framework — web, JPA, validation, auto-config |
+| Spring Data JPA + Hibernate | ORM and schema management |
+| Neon DB (Serverless PostgreSQL) | Primary persistence layer |
+| Upstash Redis (Serverless, TLS) | Cache / session layer |
+| Groq API — `llama-3.1-8b-instant` | LLM for problem structuring and categorisation |
+| Spring `RestClient` | Outbound HTTP to Groq API |
+| `spring-dotenv` | Loads `.env` into Spring Environment at startup |
+| Maven Wrapper | Self-contained build — no Maven install required |
 
 ---
 
-## Key Features
+## Local Setup
 
-- **AI-Powered Problem Structuring** — Raw NGO descriptions are sent to the Groq LLM with a strict Business Analyst system prompt. The model returns a clean technical summary (`structuredProblem`) ready for developer consumption.
+### Prerequisites
 
-- **Automated Technology Categorisation** — The LLM maps each problem to one of four strict enum values (`SOFTWARE_WEB`, `DATA_SCIENCE_ML`, `IOT_HARDWARE`, `PROCESS_AUTOMATION`). Invalid categories are rejected with an `IllegalArgumentException` before persistence.
-
-- **Serverless Infrastructure** — Zero infrastructure to manage. Neon DB and Upstash Redis are fully serverless; the service connects via environment variables and is ready for cloud deployment.
-
-- **Robust REST API** — Clean layered architecture: Controller → Service → Repository. Input validation via `@Valid` + `@NotBlank` returns HTTP 400 before the AI layer is ever invoked.
-
-- **Self-Contained Build** — Maven Wrapper (`mvnw` / `mvnw.cmd`) means no Maven installation required. Clone and run.
+- JDK 25 (compiles to Java 21 target)
+- Node.js 18+ and npm
+- [Neon DB](https://neon.tech) project with a database
+- [Upstash Redis](https://upstash.com) database (TLS enabled)
+- [Groq API key](https://console.groq.com)
 
 ---
 
-## API Reference
+### Step 1 — Clone the repository
+
+```bash
+git clone https://github.com/your-username/connecting-dots.git
+cd connecting-dots
+```
+
+---
+
+### Step 2 — Configure environment variables
+
+Create a `.env` file in the **project root** (never commit this file):
+
+```env
+# Neon DB — Serverless PostgreSQL
+NEON_DB_URL=jdbc:postgresql://<your-neon-host>/neondb?sslmode=require
+NEON_DB_USERNAME=your_neon_username
+NEON_DB_PASSWORD=your_neon_password
+
+# Upstash Redis — Serverless, TLS required
+UPSTASH_REDIS_HOST=your-upstash-host.upstash.io
+UPSTASH_REDIS_PORT=6379
+UPSTASH_REDIS_PASSWORD=your_upstash_password
+
+# Groq LLM API
+GROQ_API_KEY=your_groq_api_key
+```
+
+> `spring-dotenv` reads this file automatically on startup and injects each entry as a Spring environment property. No code changes required.
+
+---
+
+### Step 3 — Start the backend
+
+```bash
+# Unix / macOS
+./mvnw clean spring-boot:run
+
+# Windows
+mvnw.cmd clean spring-boot:run
+```
+
+The API starts on **`http://localhost:8080`**.
+
+---
+
+### Step 4 — Start the frontend
+
+Open a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The React app starts on **`http://localhost:5173`**.
+
+---
+
+## Core API Endpoints
 
 ### `POST /api/v1/problems/submit`
 
-Submits a raw NGO problem description. The service calls the Groq LLM, structures the response, and persists the result.
+Accepts a raw NGO problem description, calls the Groq LLM to structure it, and persists the result.
 
-**Request**
-
-```http
-POST /api/v1/problems/submit
-Content-Type: application/json
-```
+**Request body**
 
 ```json
 {
   "ngoName": "Clean Water Initiative",
-  "rawDescription": "We are a small NGO working in rural Kenya. We collect water quality data on paper forms from 50 villages every week, but we have no way to analyse trends or alert communities when contamination levels are dangerous. We need some kind of digital system."
+  "rawDescription": "We collect water quality data on paper forms from 50 villages every week but have no way to analyse trends or alert communities when contamination is dangerous."
 }
 ```
 
@@ -98,18 +164,20 @@ Content-Type: application/json
 {
   "id": "a3f1c2d4-8b7e-4f2a-9c1d-0e5f6a7b8c9d",
   "ngoName": "Clean Water Initiative",
-  "rawDescription": "We are a small NGO working in rural Kenya...",
-  "structuredProblem": "The organisation requires a digital data collection and analytics platform to replace paper-based water quality monitoring. The system must aggregate readings from 50 distributed field sites, perform trend analysis, and trigger automated contamination alerts for community notification.",
+  "rawDescription": "We collect water quality data...",
+  "structuredProblem": "The organisation requires a digital data collection and analytics platform to replace paper-based water quality monitoring across 50 field sites, with automated contamination alerting.",
   "techCategory": "DATA_SCIENCE_ML",
   "status": "OPEN"
 }
 ```
 
+**Validation** — returns `400 Bad Request` if `ngoName` or `rawDescription` is blank.
+
 ---
 
 ### `GET /api/v1/problems/open`
 
-Returns all problem statements with `status = "OPEN"`.
+Returns all persisted problems with `status = "OPEN"`.
 
 **Response** `200 OK`
 
@@ -138,83 +206,41 @@ Returns all problem statements with `status = "OPEN"`.
 
 ---
 
-## Local Setup
-
-### Prerequisites
-
-- JDK 25 installed (compiles to Java 21 target)
-- A [Neon DB](https://neon.tech) project with a database created
-- An [Upstash Redis](https://upstash.com) database (TLS enabled)
-- A [Groq API key](https://console.groq.com)
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/your-username/connecting-dots.git
-cd connecting-dots
-```
-
-### 2. Configure environment variables
-
-Create a `.env` file in the project root:
-
-```env
-NEON_DB_URL=jdbc:postgresql://<your-neon-host>/neondb?sslmode=require
-NEON_DB_USERNAME=your_neon_username
-NEON_DB_PASSWORD=your_neon_password
-
-UPSTASH_REDIS_HOST=your-upstash-host.upstash.io
-UPSTASH_REDIS_PORT=6379
-UPSTASH_REDIS_PASSWORD=your_upstash_password
-
-GROQ_API_KEY=your_groq_api_key
-```
-
-> The `.env` file is loaded automatically at startup by `spring-dotenv`. It is listed in `.gitignore` and should never be committed.
-
-### 3. Run the service
-
-```bash
-# Unix / macOS
-./mvnw spring-boot:run
-
-# Windows
-mvnw.cmd spring-boot:run
-```
-
-The service starts on `http://localhost:8080`.
-
-### 4. Test the API
-
-```bash
-curl -X POST http://localhost:8080/api/v1/problems/submit \
-  -H "Content-Type: application/json" \
-  -d '{
-    "ngoName": "EduReach Africa",
-    "rawDescription": "We need a way to track student attendance and learning outcomes across 30 rural schools with no internet connectivity."
-  }'
-```
-
----
-
 ## Project Structure
 
 ```
-src/main/java/com/connectingdots/
-├── ConnectingDotsApplication.java      # Spring Boot entry point
-├── controller/
-│   └── ProblemController.java          # REST endpoints
-├── domain/
-│   ├── NgoProblemStatement.java        # JPA entity
-│   ├── NgoProblemRepository.java       # Spring Data repository
-│   └── TechCategory.java              # Enum: problem classification
-└── service/
-    └── GroqAiService.java              # Groq LLM integration
+connecting-dots/
+│
+├── frontend/                            # React + Vite frontend
+│   ├── src/
+│   │   ├── api/client.ts               # Axios instance (baseURL: localhost:8080/api/v1)
+│   │   ├── components/
+│   │   │   ├── AppLayout.tsx           # Navbar + Outlet layout wrapper
+│   │   │   ├── Navbar.tsx              # Sticky global navigation bar
+│   │   │   └── LiveToast.tsx           # Simulated real-time facilitation toasts
+│   │   ├── context/ProjectContext.tsx  # Global state + mock project data
+│   │   └── pages/
+│   │       ├── Landing.tsx             # Animated split-screen hero
+│   │       ├── NgoDashboard.tsx        # AI submit form + active project list
+│   │       ├── ContributorDashboard.tsx# Live project feed from database
+│   │       ├── NgoRegister.tsx         # NGO registration form
+│   │       └── ContributorRegister.tsx # Contributor registration form
+│   ├── tailwind.config.js
+│   └── vite.config.ts
+│
+└── src/main/java/com/connectingdots/  # Spring Boot backend
+    ├── ConnectingDotsApplication.java  # Entry point (@SpringBootApplication)
+    ├── controller/ProblemController.java   # REST layer + CORS config
+    ├── domain/
+    │   ├── NgoProblemStatement.java    # JPA entity (plain POJO)
+    │   ├── NgoProblemRepository.java   # Spring Data JPA repository
+    │   └── TechCategory.java          # Enum: 4 technology domains
+    └── service/GroqAiService.java      # Groq LLM integration via RestClient
 ```
 
 ---
 
-## Schema
+## Database Schema
 
 Hibernate manages the schema automatically (`ddl-auto=update`). The `ngo_problem_statement` table is created on first run:
 
@@ -224,18 +250,18 @@ Hibernate manages the schema automatically (`ddl-auto=update`). The `ngo_problem
 | `ngo_name` | VARCHAR | Organisation name |
 | `raw_description` | TEXT | Original unstructured input |
 | `structured_problem` | TEXT | AI-generated technical summary |
-| `tech_category` | VARCHAR | Enum value (stored as string) |
+| `tech_category` | VARCHAR | Enum value stored as string |
 | `status` | VARCHAR | Default: `OPEN` |
 
 ---
 
 ## Roadmap
 
+- [ ] JWT-based authentication for NGO and Contributor accounts
 - [ ] Volunteer profile matching engine
-- [ ] JWT-based authentication
-- [ ] Webhook notifications on problem match
-- [ ] Admin dashboard (React frontend)
+- [ ] WebSocket integration for real-time facilitation messages
 - [ ] Flyway database migrations
+- [ ] Production deployment (Railway / Render + Vercel)
 
 ---
 
