@@ -25,13 +25,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Create empty .env file for spring-dotenv
+        run: touch .env
+
       - name: Build and test
         run: ./mvnw clean test
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
-          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
-          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-          UPSTASH_REDIS_HOST: ${{ secrets.UPSTASH_REDIS_HOST }}
-          UPSTASH_REDIS_PORT: ${{ secrets.UPSTASH_REDIS_PORT }}
-          UPSTASH_REDIS_PASSWORD: ${{ secrets.UPSTASH_REDIS_PASSWORD }}
