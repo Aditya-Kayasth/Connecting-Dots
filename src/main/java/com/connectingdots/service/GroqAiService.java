@@ -5,12 +5,14 @@ import com.connectingdots.domain.NgoProblemStatement;
 import com.connectingdots.domain.TechCategory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class GroqAiService {
@@ -67,5 +69,13 @@ public class GroqAiService {
         );
 
         return repository.save(entity);
+    }
+
+    public NgoProblemStatement updateStatus(UUID id, String newStatus) {
+        NgoProblemStatement problem = repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Problem not found with id: " + id));
+        problem.setStatus(newStatus);
+        return repository.save(problem);
     }
 }

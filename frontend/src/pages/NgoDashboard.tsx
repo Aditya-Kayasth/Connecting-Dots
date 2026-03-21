@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import apiClient from '../api/client'
-import { useProjects } from '../context/ProjectContext'
 
-interface ProblemResult {
+interface LiveProblem {
   id: string
   ngoName: string
+  rawDescription: string
   structuredProblem: string
   techCategory: string
   status: string
@@ -19,32 +19,62 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 export default function NgoDashboard() {
-  const { projects, markAsSolved } = useProjects()
+  const [projects, setProjects] = useState<LiveProblem[]>([])
+  const [fetchLoading, setFetchLoading] = useState(true)
+  const [solvingId, setSolvingId] = useState<string | null>(null)
 
   // AI submit form state
   const [ngoName, setNgoName] = useState('')
   const [rawDescription, setRawDescription] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<ProblemResult | null>(null)
+  const [submitLoading, setSubmitLoading] = useState(false)
+  const [result, setResult] = useState<LiveProblem | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const fetchProblems = async () => {
+    setFetchLoading(true)
+    try {
+      const { data } = await apiClient.get<LiveProblem[]>('/problems/open')
+      setProjects(data)
+    } catch {
+      // silently fail — stats will just show 0
+    } finally {
+      setFetchLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchProblems() }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setSubmitLoading(true)
     setError(null)
     setResult(null)
     try {
-      const { data } = await apiClient.post<ProblemResult>('/problems/submit', {
+      const { data } = await apiClient.post<LiveProblem>('/problems/submit', {
         ngoName,
         rawDescription,
       })
       setResult(data)
       setNgoName('')
       setRawDescription('')
+      // Refresh the project list so the new submission appears
+      fetchProblems()
     } catch {
       setError('Something went wrong. Make sure the backend is running and your .env is configured.')
     } finally {
-      setLoading(false)
+      setSubmitLoading(false)
+    }
+  }
+
+  const handleMarkSolved = async (id: string) => {
+    setSolvingId(id)
+    try {
+      await apiClient.patch(`/problems/${id}/status?status=SOLVED`)
+      await fetchProblems()
+    } catch {
+      // no-op — button will re-enable
+    } finally {
+      setSolvingId(null)
     }
   }
 
@@ -73,60 +103,71 @@ export default function NgoDashboard() {
         {/* ── Active Projects ── */}
         <section>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Active Projects</h2>
-          <div className="space-y-3">
-            {projects.map((project, i) => {
-              const isSolved = project.status === 'SOLVED'
-              return (
-                <motion.div
-                  key={project.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.3 }}
-                  className={`bg-white rounded-2xl border p-5 transition-all ${
-                    isSolved
-                      ? 'border-gray-100 opacity-60'
-                      : 'border-amber-100 shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    {/* Left */}
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-800 text-sm">
-                          {project.ngoName}
-                        </span>
-                        <span className="text-xs text-gray-400">{project.state}</span>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                          CATEGORY_COLORS[project.techCategory] ?? 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {project.techCategory.replace(/_/g, ' ')}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
-                        {project.structuredProblem}
-                      </p>
-                    </div>
 
-                    {/* Right — status / action */}
-                    <div className="flex-shrink-0">
-                      {isSolved ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700">
-                          ✓ Solved
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => markAsSolved(project.id)}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-full border border-amber-300 text-amber-700 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-colors"
-                        >
-                          Mark Solved
-                        </button>
-                      )}
+          {fetchLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-4 border-amber-200 border-t-amber-500 rounded-full animate-spin" />
+            </div>
+          ) : projects.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-12">
+              No projects yet. Submit your first problem below.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {projects.map((project, i) => {
+                const isSolved = project.status === 'SOLVED'
+                const isPatching = solvingId === project.id
+                return (
+                  <motion.div
+                    key={project.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05, duration: 0.3 }}
+                    className={`bg-white rounded-2xl border p-5 transition-all ${
+                      isSolved ? 'border-gray-100 opacity-60' : 'border-amber-100 shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-gray-800 text-sm">{project.ngoName}</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            CATEGORY_COLORS[project.techCategory] ?? 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {project.techCategory.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                          {project.structuredProblem}
+                        </p>
+                      </div>
+
+                      <div className="flex-shrink-0">
+                        {isSolved ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700">
+                            ✓ Solved
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleMarkSolved(project.id)}
+                            disabled={isPatching}
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-amber-300 text-amber-700 hover:bg-amber-500 hover:text-white hover:border-amber-500 disabled:opacity-50 transition-colors"
+                          >
+                            {isPatching ? (
+                              <>
+                                <span className="w-3 h-3 border-2 border-amber-400/40 border-t-amber-600 rounded-full animate-spin" />
+                                Saving…
+                              </>
+                            ) : 'Mark Solved'}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          )}
         </section>
 
         {/* ── AI Submit Form ── */}
@@ -158,10 +199,10 @@ export default function NgoDashboard() {
               </div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={submitLoading}
                 className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
               >
-                {loading ? (
+                {submitLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                     AI is analyzing your problem…
@@ -210,8 +251,6 @@ export default function NgoDashboard() {
     </div>
   )
 }
-
-// ── Stat card ──────────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (

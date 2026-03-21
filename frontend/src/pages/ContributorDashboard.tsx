@@ -61,7 +61,8 @@ export default function ContributorDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterOption>('ALL')
-  const [offeredIds, setOfferedIds] = useState<Set<string>>(new Set())
+  const [takenIds, setTakenIds] = useState<Set<string>>(new Set())
+  const [loadingId, setLoadingId] = useState<string | null>(null)
 
   const fetchProblems = async () => {
     setLoading(true)
@@ -84,7 +85,21 @@ export default function ContributorDashboard() {
     ? problems
     : problems.filter(p => p.techCategory === filter)
 
-  const handleOffer = (id: string) => setOfferedIds(prev => new Set(prev).add(id))
+  const handleOffer = async (id: string) => {
+    setLoadingId(id)
+    try {
+      await apiClient.patch(`/problems/${id}/status?status=TAKEN`)
+      setTakenIds(prev => new Set(prev).add(id))
+      // Optimistically update status in local array so card grays out
+      setProblems(prev =>
+        prev.map(p => (p.id === id ? { ...p, status: 'TAKEN' } : p))
+      )
+    } catch {
+      // no-op — button re-enables
+    } finally {
+      setLoadingId(null)
+    }
+  }
 
   return (
     <div className="bg-indigo-50 min-h-full">
@@ -188,7 +203,8 @@ export default function ContributorDashboard() {
             {filtered.map((problem, i) => {
               const style = CATEGORY_STYLES[problem.techCategory] ?? DEFAULT_STYLE
               const isSolved = problem.status !== 'OPEN'
-              const hasOffered = offeredIds.has(problem.id)
+              const hasOffered = takenIds.has(problem.id)
+              const isPatching = loadingId === problem.id
 
               return (
                 <motion.div
@@ -247,9 +263,15 @@ export default function ContributorDashboard() {
                     ) : (
                       <button
                         onClick={() => handleOffer(problem.id)}
-                        className={`text-xs font-semibold px-4 py-1.5 rounded-full bg-indigo-500 text-white transition-colors ${style.hover}`}
+                        disabled={isPatching}
+                        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-1.5 rounded-full bg-indigo-500 text-white transition-colors disabled:opacity-50 ${style.hover}`}
                       >
-                        Offer Help
+                        {isPatching ? (
+                          <>
+                            <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            Claiming…
+                          </>
+                        ) : 'Offer Help'}
                       </button>
                     )}
                   </div>
