@@ -26,3 +26,7 @@ buildNumber.properties
 
 # Kiro IDE workspace files
 .kiro/
+
+# Local run scripts
+dev.sh
+dev.ps1
