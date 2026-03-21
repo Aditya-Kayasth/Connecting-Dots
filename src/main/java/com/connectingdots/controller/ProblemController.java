@@ -3,10 +3,13 @@ package com.connectingdots.controller;
 import com.connectingdots.domain.NgoProblemRepository;
 import com.connectingdots.domain.NgoProblemStatement;
 import com.connectingdots.service.GroqAiService;
+import com.connectingdots.service.PdfParsingService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,10 +21,14 @@ public class ProblemController {
 
     private final GroqAiService groqAiService;
     private final NgoProblemRepository repository;
+    private final PdfParsingService pdfParsingService;
 
-    public ProblemController(GroqAiService groqAiService, NgoProblemRepository repository) {
+    public ProblemController(GroqAiService groqAiService,
+                             NgoProblemRepository repository,
+                             PdfParsingService pdfParsingService) {
         this.groqAiService = groqAiService;
         this.repository = repository;
+        this.pdfParsingService = pdfParsingService;
     }
 
     public record ProblemSubmitRequest(
@@ -46,5 +53,14 @@ public class ProblemController {
             @RequestParam String status) {
         NgoProblemStatement updated = groqAiService.updateStatus(id, status);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<NgoProblemStatement> uploadPdf(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("ngoName") String ngoName) {
+        String extractedText = pdfParsingService.extractText(file);
+        NgoProblemStatement saved = groqAiService.processAndSaveProblem(ngoName, extractedText);
+        return ResponseEntity.status(201).body(saved);
     }
 }
