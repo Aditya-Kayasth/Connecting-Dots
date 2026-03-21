@@ -15,6 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Make wrapper executable (Backup)
+        run: chmod +x ./mvnw
+
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
