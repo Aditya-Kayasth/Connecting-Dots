@@ -23,12 +23,19 @@ export default function NgoDashboard() {
   const [fetchLoading, setFetchLoading] = useState(true)
   const [solvingId, setSolvingId] = useState<string | null>(null)
 
-  // AI submit form state
+  // shared result/error state for both forms
+  const [result, setResult] = useState<LiveProblem | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  // text form state
   const [ngoName, setNgoName] = useState('')
   const [rawDescription, setRawDescription] = useState('')
   const [submitLoading, setSubmitLoading] = useState(false)
-  const [result, setResult] = useState<LiveProblem | null>(null)
-  const [error, setError] = useState<string | null>(null)
+
+  // pdf upload state
+  const [pdfNgoName, setPdfNgoName] = useState('')
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   const fetchProblems = async () => {
     setFetchLoading(true)
@@ -57,12 +64,38 @@ export default function NgoDashboard() {
       setResult(data)
       setNgoName('')
       setRawDescription('')
-      // Refresh the project list so the new submission appears
       fetchProblems()
     } catch {
       setError('Something went wrong. Make sure the backend is running and your .env is configured.')
     } finally {
       setSubmitLoading(false)
+    }
+  }
+
+  const handlePdfUpload = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!pdfFile) return
+    setPdfLoading(true)
+    setError(null)
+    setResult(null)
+    try {
+      const formData = new FormData()
+      formData.append('file', pdfFile)
+      formData.append('ngoName', pdfNgoName)
+      const { data } = await apiClient.post<LiveProblem>('/problems/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setResult(data)
+      setPdfNgoName('')
+      setPdfFile(null)
+      // reset the file input
+      const fileInput = document.getElementById('pdf-input') as HTMLInputElement
+      if (fileInput) fileInput.value = ''
+      fetchProblems()
+    } catch {
+      setError('PDF upload failed. Ensure the file is a valid PDF and the backend is running.')
+    } finally {
+      setPdfLoading(false)
     }
   }
 
@@ -168,6 +201,62 @@ export default function NgoDashboard() {
               })}
             </div>
           )}
+        </section>
+
+        {/* ── PDF Upload ── */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload a Document (PDF)</h2>
+          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+            <form onSubmit={handlePdfUpload} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">NGO Name</label>
+                <input
+                  type="text"
+                  value={pdfNgoName}
+                  onChange={e => setPdfNgoName(e.target.value)}
+                  required
+                  placeholder="e.g. Green Earth Foundation"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">PDF Document</label>
+                <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-amber-200 rounded-xl cursor-pointer bg-amber-50 hover:bg-amber-100 transition-colors">
+                  <div className="flex flex-col items-center gap-1 pointer-events-none">
+                    <span className="text-2xl">📄</span>
+                    <span className="text-sm text-gray-500">
+                      {pdfFile ? pdfFile.name : 'Click to select a PDF'}
+                    </span>
+                    {pdfFile && (
+                      <span className="text-xs text-gray-400">
+                        {(pdfFile.size / 1024).toFixed(1)} KB
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    id="pdf-input"
+                    type="file"
+                    accept=".pdf"
+                    required
+                    className="hidden"
+                    onChange={e => setPdfFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                disabled={pdfLoading || !pdfFile}
+                className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
+              >
+                {pdfLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Extracting & analyzing PDF…
+                  </span>
+                ) : 'Upload & Analyze PDF'}
+              </button>
+            </form>
+          </div>
         </section>
 
         {/* ── AI Submit Form ── */}
