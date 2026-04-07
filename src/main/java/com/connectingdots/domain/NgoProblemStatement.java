@@ -23,6 +23,14 @@ public class NgoProblemStatement {
 
     private String status = "OPEN";
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private User author;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "claimed_by_id")
+    private User claimedBy;
+
     public NgoProblemStatement() {}
 
     public NgoProblemStatement(UUID id, String ngoName, String rawDescription,
@@ -52,4 +60,10 @@ public class NgoProblemStatement {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public User getAuthor() { return author; }
+    public void setAuthor(User author) { this.author = author; }
+
+    public User getClaimedBy() { return claimedBy; }
+    public void setClaimedBy(User claimedBy) { this.claimedBy = claimedBy; }
 }
