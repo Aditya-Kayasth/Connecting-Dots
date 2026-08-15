@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+celery
+redis
+openai
+pydantic-settings
+pdfplumber
+python-multipart
+pytest
+httpx
