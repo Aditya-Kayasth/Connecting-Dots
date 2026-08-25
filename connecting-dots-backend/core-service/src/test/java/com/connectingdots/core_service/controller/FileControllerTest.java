@@ -25,9 +25,13 @@ public class FileControllerTest {
     @MockitoBean
     private FileService fileService;
 
+    @Autowired
+    private com.connectingdots.core_service.security.JwtUtil jwtUtil;
+
     @Test
-    @WithMockUser(username = "ngo@example.com", roles = "NGO")
     void shouldReturnUploadSignatureWhenAuthenticated() throws Exception {
+        String token = jwtUtil.generateToken("ngo@example.com", "NGO");
+        
         CloudinarySignatureResponse mockResponse = new CloudinarySignatureResponse(
                 "mock-signature",
                 1234567890L,
@@ -39,6 +43,7 @@ public class FileControllerTest {
         when(fileService.generateUploadSignature(anyString())).thenReturn(mockResponse);
 
         mockMvc.perform(get("/api/v1/core/files/signature")
+                        .header("Authorization", "Bearer " + token)
                         .param("folder", "connecting-dots/problems"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.signature").value("mock-signature"))
