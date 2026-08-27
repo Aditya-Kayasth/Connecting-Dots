@@ -6,13 +6,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -51,11 +54,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 5. Verify the token hasn't been forged or expired
                 if (jwtUtil.isTokenValid(jwt, userEmail)) {
 
-                    // We can securely grant access without hitting the database again!
+                    List<GrantedAuthority> authorities = new ArrayList<>();
+                    String role = jwtUtil.extractRole(jwt);
+                    if (role != null && !role.isBlank()) {
+                        String roleName = role.startsWith("ROLE_") ? role : "ROLE_" + role.toUpperCase();
+                        authorities.add(new SimpleGrantedAuthority(roleName));
+                    }
+
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userEmail,
                             null,
-                            Collections.emptyList() // We will add the actual Role here in the next step
+                            authorities
                     );
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

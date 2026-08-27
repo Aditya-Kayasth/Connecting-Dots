@@ -78,15 +78,26 @@ public class SecurityConfig {
 
                 // Define our URL access rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/core/auth/**").permitAll() // The future login/register routes are public
+                        .requestMatchers("/api/v1/core/auth/**").permitAll()
+                        .requestMatchers("/api/v1/core/ping").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/core/problem-statements/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/core/problems/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/core/profiles/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/core/contributors/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/core/ngos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/core/assignments/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/core/reviews/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/core/problem-statements/*/ai-update").permitAll()
-                        .requestMatchers("/api/v1/core/ping").permitAll() // Our test ping route is public
-                        .anyRequest().authenticated() // Every other request MUST have a valid JWT
+                        .anyRequest().authenticated()
                 )
 
                 // Tell Spring not to store sessions in memory (enforcing Stateless
                 // architecture)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                ))
 
                 // Register our Authentication engine
                 .authenticationProvider(authenticationProvider())

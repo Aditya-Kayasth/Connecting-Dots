@@ -14,7 +14,7 @@ import java.util.function.Function;
 public class JwtUtil {
 
     // 1. Pulls the master secret from your .env file
-    @Value("${JWT_SECRET}")
+    @Value("${jwt.secret:${JWT_SECRET}}")
     private String secretString;
 
     // 2. Defines how long the wristband is valid (e.g., 24 hours)
@@ -39,6 +39,10 @@ public class JwtUtil {
     // 5. The method the filter will use to extract the user's email from incoming tokens
     public String extractEmail(String token) {
         return extractClaim(token, claims -> claims.getSubject());
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
     // 6. The method that verifies the token's cryptographic seal hasn't been tampered with
