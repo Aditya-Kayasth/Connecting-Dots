@@ -71,4 +71,22 @@ public class ProfileService {
 
         return contributorProfileRepository.save(profile);
     }
+
+    public java.util.List<NgoProfile> getAllNgoProfiles() {
+        return ngoProfileRepository.findAll();
+    }
+
+    public java.util.List<ContributorProfile> getAllContributorProfiles() {
+        return contributorProfileRepository.findAll();
+    }
+
+    public NgoProfile getNgoProfileById(java.util.UUID id) {
+        return ngoProfileRepository.findById(id)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "NGO profile not found"));
+    }
+
+    public ContributorProfile getContributorProfileById(java.util.UUID id) {
+        return contributorProfileRepository.findById(id)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Contributor profile not found"));
+    }
 }
