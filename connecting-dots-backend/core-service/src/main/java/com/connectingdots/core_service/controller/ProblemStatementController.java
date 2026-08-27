@@ -38,6 +38,13 @@ public class ProblemStatementController {
         return ResponseEntity.ok(problemStatementService.getProblemStatements(domain, status, pageable));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ProblemStatement> getProblemStatementById(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String targetLang) {
+        return ResponseEntity.ok(problemStatementService.getProblemStatementById(id, targetLang));
+    }
+
     @PostMapping("/{id}/ingest")
     public ResponseEntity<String> triggerIngestion(@PathVariable UUID id) {
         ProblemStatement problem = problemRepository.findById(id)

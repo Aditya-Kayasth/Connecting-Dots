@@ -25,4 +25,8 @@ public class NgoProfile extends BaseEntity {
 
     @Column(name = "contact_number")
     private String contactNumber;
+
+    @Column(name = "preferred_language")
+    @Builder.Default
+    private String preferredLanguage = "en";
 }

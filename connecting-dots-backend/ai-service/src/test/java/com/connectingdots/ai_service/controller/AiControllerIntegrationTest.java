@@ -40,4 +40,20 @@ class AiControllerIntegrationTest {
                 .content(rawText))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void translateProblemContent_Success() throws Exception {
+        com.connectingdots.ai_service.dto.TranslationRequest request =
+                new com.connectingdots.ai_service.dto.TranslationRequest("Title", "Desc", "hi");
+
+        com.connectingdots.ai_service.dto.TranslationResponse mockResponse =
+                new com.connectingdots.ai_service.dto.TranslationResponse("शीर्षक", "विवरण", "hi");
+
+        when(aiProblemService.translateProblemContent(any())).thenReturn(mockResponse);
+
+        mockMvc.perform(post("/api/v1/ai/translate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
 }

@@ -37,11 +37,14 @@ public class ProfileService {
             throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized: Only NGOs can create NGO profiles.");
         }
 
+        String lang = (request.preferredLanguage() != null && !request.preferredLanguage().isBlank()) ? request.preferredLanguage() : "en";
+
         NgoProfile profile = NgoProfile.builder()
                 .user(user)
                 .organizationName(request.organizationName())
                 .domain(request.domain())
                 .contactNumber(request.contactNumber())
+                .preferredLanguage(lang)
                 .build();
 
         return ngoProfileRepository.save(profile);
@@ -55,12 +58,15 @@ public class ProfileService {
             throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized: Only Contributors can create Contributor profiles.");
         }
 
+        String lang = (request.preferredLanguage() != null && !request.preferredLanguage().isBlank()) ? request.preferredLanguage() : "en";
+
         ContributorProfile profile = ContributorProfile.builder()
                 .user(user)
                 .firstName(request.firstName())
                 .lastName(request.lastName())
                 .skillsSummary(request.skillsSummary())
                 .portfolioUrl(request.portfolioUrl())
+                .preferredLanguage(lang)
                 .build();
 
         return contributorProfileRepository.save(profile);

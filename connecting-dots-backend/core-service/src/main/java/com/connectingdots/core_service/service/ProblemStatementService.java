@@ -1,20 +1,28 @@
 package com.connectingdots.core_service.service;
 
 import com.connectingdots.core_service.dto.ProblemStatementRequest;
+import com.connectingdots.core_service.dto.TranslationRequest;
+import com.connectingdots.core_service.dto.TranslationResponse;
+import com.connectingdots.core_service.entity.ContributorProfile;
 import com.connectingdots.core_service.entity.NgoProfile;
 import com.connectingdots.core_service.entity.ProblemStatement;
 import com.connectingdots.core_service.entity.User;
+import com.connectingdots.core_service.repository.ContributorProfileRepository;
 import com.connectingdots.core_service.repository.NgoProfileRepository;
 import com.connectingdots.core_service.repository.ProblemStatementRepository;
 import com.connectingdots.core_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import com.connectingdots.core_service.repository.ProblemStatementSpecs;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,17 +30,25 @@ public class ProblemStatementService {
 
     private final ProblemStatementRepository problemStatementRepository;
     private final NgoProfileRepository ngoProfileRepository;
+    private final ContributorProfileRepository contributorProfileRepository;
     private final UserRepository userRepository;
 
+    private final RestClient restClient = RestClient.create();
+
     private User getAuthenticatedUser() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            return null;
+        }
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        return userRepository.findByEmail(email).orElse(null);
     }
 
     @Transactional
     public ProblemStatement createProblemStatement(ProblemStatementRequest request) {
         User user = getAuthenticatedUser();
+        if (user == null) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "User not authenticated.");
+        }
 
         // 1. Verify the user is an NGO
         if (user.getRole() != User.Role.NGO) {
@@ -81,6 +97,54 @@ public class ProblemStatementService {
                 .where(ProblemStatementSpecs.hasDomain(domain))
                 .and(ProblemStatementSpecs.hasStatus(status));
         return problemStatementRepository.findAll(spec, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public ProblemStatement getProblemStatementById(UUID id, String targetLang) {
+        ProblemStatement problem = problemStatementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Problem statement not found"));
+
+        String lang = targetLang;
+        if (lang == null || lang.isBlank()) {
+            lang = getUserPreferredLanguage();
+        }
+
+        if (lang != null && !"en".equalsIgnoreCase(lang)) {
+            try {
+                TranslationResponse response = restClient.post()
+                        .uri("http://localhost:8082/api/v1/ai/translate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(new TranslationRequest(problem.getTitle(), problem.getDescription(), lang))
+                        .retrieve()
+                        .body(TranslationResponse.class);
+
+                if (response != null && response.translatedTitle() != null) {
+                    problem.setTitle(response.translatedTitle());
+                    problem.setDescription(response.translatedDescription());
+                }
+            } catch (Exception e) {
+                // Fallback gracefully to original problem statement if AI translation is unavailable
+            }
+        }
+
+        return problem;
+    }
+
+    private String getUserPreferredLanguage() {
+        User user = getAuthenticatedUser();
+        if (user == null) {
+            return "en";
+        }
+        if (user.getRole() == User.Role.NGO) {
+            return ngoProfileRepository.findByUser(user)
+                    .map(NgoProfile::getPreferredLanguage)
+                    .orElse("en");
+        } else if (user.getRole() == User.Role.CONTRIBUTOR) {
+            return contributorProfileRepository.findByUser(user)
+                    .map(ContributorProfile::getPreferredLanguage)
+                    .orElse("en");
+        }
+        return "en";
     }
 
     @Transactional

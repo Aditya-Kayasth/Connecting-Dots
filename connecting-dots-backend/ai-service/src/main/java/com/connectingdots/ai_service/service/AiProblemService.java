@@ -49,4 +49,22 @@ public class AiProblemService {
                 .retrieve()
                 .body(Object.class);
     }
+
+    public com.connectingdots.ai_service.dto.TranslationResponse translateProblemContent(com.connectingdots.ai_service.dto.TranslationRequest request) {
+        String targetLang = request.targetLanguage() != null && !request.targetLanguage().isBlank()
+                ? request.targetLanguage() : "en";
+
+        String promptText = String.format(
+                "Translate the following software problem statement into target language code '%s'. " +
+                "Maintain technical accuracy and tone.\nTitle: %s\nDescription: %s",
+                targetLang, request.title(), request.description()
+        );
+
+        return chatClient.prompt()
+                .system("You are an AI translation engine for technical problem statements. " +
+                        "Return ONLY raw JSON with keys 'translatedTitle' and 'translatedDescription' and 'targetLanguage'. No markdown formatting or backticks.")
+                .user(promptText)
+                .call()
+                .entity(com.connectingdots.ai_service.dto.TranslationResponse.class);
+    }
 }
