@@ -5,7 +5,12 @@ spring:
   application:
     name: ai-service
   config:
-    import: optional:file:.env[.properties]
+    import: optional:file:.env[.properties],optional:file:../../.env[.properties]
+  data:
+    redis:
+      host: ${REDIS_HOST:redis-cache}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   model:
     chat: google-genai
   ai:
@@ -19,6 +24,14 @@ spring:
 gemini:
   api:
     key: ${GEMINI_API_KEY}
+
+internal:
+  service:
+    secret: ${INTERNAL_SERVICE_SECRET}
+
+qstash:
+  current-signing-key: ${QSTASH_CURRENT_SIGNING_KEY}
+  next-signing-key: ${QSTASH_NEXT_SIGNING_KEY}
 
 eureka:
   instance:
