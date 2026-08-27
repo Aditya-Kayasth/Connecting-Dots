@@ -42,6 +42,8 @@ class ApplicationControllerIntegrationTest {
     @Autowired private JwtUtil jwtUtil;
 
     private String contributorToken;
+    private String ngoToken;
+    private String otherNgoToken;
     private ContributorProfile contributorProfile;
     private ProblemStatement openProblemStatement;
     private ProblemStatement closedProblemStatement;
@@ -59,6 +61,13 @@ class ApplicationControllerIntegrationTest {
         userRepository.save(ngoUser);
         NgoProfile ngoProfile = NgoProfile.builder().user(ngoUser).organizationName("Org 1").domain("Tech").build();
         ngoProfileRepository.save(ngoProfile);
+        ngoToken = jwtUtil.generateToken(ngoUser.getEmail(), ngoUser.getRole().name());
+
+        User otherNgoUser = User.builder().email("other@org.com").passwordHash("hash").role(User.Role.NGO).isActive(true).build();
+        userRepository.save(otherNgoUser);
+        NgoProfile otherNgoProfile = NgoProfile.builder().user(otherNgoUser).organizationName("Org 2").domain("Tech").build();
+        ngoProfileRepository.save(otherNgoProfile);
+        otherNgoToken = jwtUtil.generateToken(otherNgoUser.getEmail(), otherNgoUser.getRole().name());
 
         // Contributor Setup
         User contributorUser = User.builder().email("contributor@dev.com").passwordHash("hash").role(User.Role.CONTRIBUTOR).isActive(true).build();
@@ -134,6 +143,49 @@ class ApplicationControllerIntegrationTest {
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + contributorToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
+        );
+    }
+
+    @Test
+    void updateApplicationStatus_Success() throws Exception {
+        Application application = Application.builder()
+                .problemId(openProblemStatement.getId())
+                .contributorProfileId(contributorProfile.getId())
+                .status("PENDING")
+                .build();
+        application = applicationRepository.save(application);
+
+        com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest statusUpdateRequest =
+                new com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest("ACCEPTED");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/core/applications/" + application.getId() + "/status")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ngoToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isOk());
+
+        Application updated = applicationRepository.findById(application.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo("ACCEPTED");
+    }
+
+    @Test
+    void updateApplicationStatus_OtherNgo_Fails() {
+        Application application = Application.builder()
+                .problemId(openProblemStatement.getId())
+                .contributorProfileId(contributorProfile.getId())
+                .status("PENDING")
+                .build();
+        Application savedApp = applicationRepository.save(application);
+
+        com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest statusUpdateRequest =
+                new com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest("ACCEPTED");
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+            jakarta.servlet.ServletException.class,
+            () -> mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/core/applications/" + savedApp.getId() + "/status")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherNgoToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(statusUpdateRequest)))
         );
     }
 }

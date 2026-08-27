@@ -28,4 +28,12 @@ public class ContributorProfile extends BaseEntity {
 
     @Column(name = "portfolio_url")
     private String portfolioUrl;
+
+    @Column(name = "preferred_language")
+    @Builder.Default
+    private String preferredLanguage = "en";
+
+    @Column(name = "completed_projects")
+    @Builder.Default
+    private Integer completedProjects = 0;
 }

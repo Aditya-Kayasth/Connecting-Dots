@@ -1,6 +1,7 @@
 package com.connectingdots.core_service.controller;
 
 import com.connectingdots.core_service.dto.ApplicationRequest;
+import com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest;
 import com.connectingdots.core_service.entity.Application;
 import com.connectingdots.core_service.service.ApplicationService;
 import jakarta.validation.Valid;
@@ -34,5 +35,19 @@ public class ApplicationController {
     public ResponseEntity<List<Application>> getProblemApplications(@PathVariable UUID problemId) {
         List<Application> applications = applicationService.getApplicationsForProblem(problemId);
         return ResponseEntity.ok(applications);
+    }
+
+    @PutMapping("/{applicationId}/status")
+    public ResponseEntity<Application> updateApplicationStatus(
+            @PathVariable UUID applicationId,
+            @Valid @RequestBody ApplicationStatusUpdateRequest request) {
+        Application application = applicationService.updateApplicationStatus(applicationId, request);
+        return ResponseEntity.ok(application);
+    }
+
+    @PutMapping("/{applicationId}/complete")
+    public ResponseEntity<Application> completeApplication(@PathVariable UUID applicationId) {
+        Application application = applicationService.completeApplication(applicationId);
+        return ResponseEntity.ok(application);
     }
 }

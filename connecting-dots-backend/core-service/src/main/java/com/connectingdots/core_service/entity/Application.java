@@ -30,7 +30,7 @@ public class Application {
 
     @Column(nullable = false)
     @Builder.Default
-    private String status = "PENDING"; // PENDING, ACCEPTED, REJECTED
+    private String status = "PENDING"; // PENDING, ACCEPTED, REJECTED, COMPLETED
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
