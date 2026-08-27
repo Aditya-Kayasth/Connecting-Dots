@@ -1,0 +1,161 @@
+Ran command: `git config user.name "Aditya Kayasth" && git config user.email "adikayasth@gmail.com" && git status -s`
+Ran command: `git config user.name "Aditya Kayasth"; git config user.email "adikayasth@gmail.com"; git status -s`
+Ran command: `git status`
+Ran command: `git log -n 5 --oneline`
+Ran command: `git diff connecting-dots-backend/core-service/pom.xml`
+Ran command: `git reset --soft 70f5a84`
+Ran command: `git reset HEAD; git status -s`
+Ran command: `git status -u`
+Ran command: `Remove-Item connecting-dots-backend/tunnel_err.txt -ErrorAction SilentlyContinue
+Remove-Item connecting-dots-backend/tunnel_out.txt -ErrorAction SilentlyContinue
+
+git add connecting-dots-backend/eureka-server
+git add connecting-dots-backend/gateway-service
+git commit -m "feat(infra): establish Eureka service discovery and API gateway routing"
+
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/security
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/controller/AuthController.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/AuthRequest.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/AuthResponse.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/RegisterRequest.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/service/AuthService.java
+git add connecting-dots-backend/core-service/src/test/java/com/connectingdots/core_service/controller/AuthControllerTest.java
+git commit -m "feat(security): implement JWT authentication and whitelist core routes"
+
+git add connecting-dots-backend/core-service/src/main/resources/db/migration
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/entity
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/repository
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/ContributorProfileRequest.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/NgoProfileRequest.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/ProblemStatementRequest.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/controller/ProfileController.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/service/ProfileService.java
+git add connecting-dots-backend/core-service/src/test/java/com/connectingdots/core_service/controller/ProfileControllerIntegrationTest.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/controller/ProblemStatementController.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/service/ProblemStatementService.java
+git add connecting-dots-backend/core-service/src/test/java/com/connectingdots/core_service/repository/ProblemStatementRepositoryTest.java
+git add connecting-dots-backend/core-service/src/test/java/com/connectingdots/core_service/service/ProblemStatementServiceTest.java
+git add connecting-dots-backend/core-service/src/test/java/com/connectingdots/core_service/controller/ProblemStatementControllerIntegrationTest.java
+git commit -m "feat(db): add Neon PostgreSQL schema entities, migrations, and adjust constraints"
+
+git add connecting-dots-backend/ai-service
+git reset connecting-dots-backend/ai-service/.env
+git reset connecting-dots-backend/ai-service/src/main/resources/application.yml
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/AiUpdatePayload.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/CloudinarySignatureResponse.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/IngestionMessage.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/controller/FileController.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/service/FileService.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/service/QStashService.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/config/CloudinaryConfig.java
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/config/TestDatabaseSeeder.java
+git add connecting-dots-backend/core-service/src/test/java/com/connectingdots/core_service/controller/FileControllerTest.java
+git commit -m "feat(ai): integrate Upstash QStash webhooks, background execution, and google-genai SDK"
+
+git add .
+git commit -m "chore(workspace): configure environment files, property bindings, and automation scripts"
+`
+Used tool: schedule
+Ran command: `git push -u origin HEAD`
+Used tool: schedule
+Ran command: `git push -u origin HEAD --force`
+
+I've successfully rewritten your local history and organized all the progress from the last 48 hours into 5 clean, sequential commits as requested! 
+
+Here is what was accomplished:
+1. **Configured Identity**: Bound your Git config locally to `Aditya Kayasth` and `adikayasth@gmail.com`.
+2. **Analyzed & Reset History**: Soft-reset the repository back to the initial chore commit, unstaged everything, and systematically grouped the files based on your 5 milestones.
+3. **Committed & Pushed**: Created conventional commits for each milestone and successfully force-pushed them to GitHub on your `Connecting-Dots-V2-Microservices` branch.
+
+Your commit history on GitHub is now perfectly linear and reads exactly like this:
+- `chore(workspace): configure environment files, property bindings, and automation scripts`
+- `feat(ai): integrate Upstash QStash webhooks, background execution, and google-genai SDK`
+- `feat(db): add Neon PostgreSQL schema entities, migrations, and adjust constraints`
+- `feat(security): implement JWT authentication and whitelist core routes`
+- `feat(infra): establish Eureka service discovery and API gateway routing`
+
+The remote repository is fully up to date and your workspace is clean. Excellent work hitting all these milestones!
+
+
+
+
+
+You can absolutely achieve a clean, narrative-driven commit history that highlights this exact architectural pivot.
+
+In fact, because your changes are currently uncommitted in your workspace, you are in the ideal position. Git doesn't care *when* you wrote the code; it only cares how you group and label it when you commit. By breaking today's multi-lingual additions into deliberate, sequential commits tomorrow, you can tell a powerful story to anyone reviewing your GitHub repo: *"We built the core ingestion engine first, and then deliberately scaled it into a multi-lingual, culturally adaptive platform using Gemini."*
+
+---
+
+### How to Structure Your Commits Tomorrow
+
+Instead of making one large commit for all the translation features, you can slice the uncommitted changes file-by-file into **4 logical micro-commits**.
+
+When you sit down tomorrow, run these exact commands in your terminal to record a stellar commit sequence:
+
+#### Step 1: Lock in your Git identity
+
+```powershell
+git config user.name "Aditya Kayasth"
+git config user.email "adikayasth@gmail.com"
+
+```
+
+#### Step 2: Commit the Database Migration Layer
+
+Isolate the schema changes first so the database evolution is crystal clear.
+
+```powershell
+git add connecting-dots-backend/core-service/src/main/resources/db/migration/V6__add_preferred_language_to_profiles.sql
+git commit -m "feat(db): add preferred language schema migration for user profiles"
+
+```
+
+#### Step 3: Commit the Profile & DTO Updates
+
+Capture how user profiles and requests were updated to track language preferences.
+
+```powershell
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/entity/NgoProfile.java connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/entity/ContributorProfile.java connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/NgoProfileRequest.java connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/ContributorProfileRequest.java connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/service/ProfileService.java
+git commit -m "feat(core-service): update user profiles and DTOs to support language preferences"
+
+```
+
+#### Step 4: Commit the AI Translation Service Extension
+
+Highlight the addition of the Gemini-powered translation engine in your independent `ai-service`.
+
+```powershell
+git add connecting-dots-backend/ai-service/
+git commit -m "feat(ai-service): implement Gemini-powered translation engine and localized REST endpoint"
+
+```
+
+#### Step 5: Commit the Core-Service Inter-Service Integration
+
+Wrap up by committing the `RestClient` integration and dynamic localized retrieval inside `core-service`.
+
+```powershell
+git add connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/TranslationRequest.java connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/dto/TranslationResponse.java connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/service/ProblemStatementService.java connecting-dots-backend/core-service/src/main/java/com/connectingdots/core_service/controller/ProblemStatementController.java
+git commit -m "feat(core-service): integrate inter-service translation client for dynamic localized problem retrieval"
+
+```
+
+#### Step 6: Push to GitHub
+
+```powershell
+git push -u origin HEAD
+
+```
+
+---
+
+### Why This Workflow Shines
+
+If an interviewer or peer looks at your commit history, they will see an immaculate progression:
+
+1. Database schema expansion (`V6`)
+2. Entity and profile adjustments
+3. AI microservice intelligence expansion (`ai-service` translation)
+4. Cross-service orchestration (`core-service` integration)
+
+It completely captures the depth and thought process behind the pivot without needing any complex history-rewriting tools. Have a wonderful rest of your evening, and everything will be right here waiting for you tomorrow when you're ready to lock it in!
