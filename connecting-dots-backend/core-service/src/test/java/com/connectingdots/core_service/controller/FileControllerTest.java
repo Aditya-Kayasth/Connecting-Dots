@@ -50,8 +50,8 @@ public class FileControllerTest {
     }
 
     @Test
-    void shouldReturnForbiddenWhenNotAuthenticated() throws Exception {
+    void shouldReturnUnauthorizedWhenNotAuthenticated() throws Exception {
         mockMvc.perform(get("/api/v1/core/files/signature"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 }
