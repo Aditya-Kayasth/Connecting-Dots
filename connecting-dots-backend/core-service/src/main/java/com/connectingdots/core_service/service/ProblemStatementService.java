@@ -3,7 +3,6 @@ package com.connectingdots.core_service.service;
 import com.connectingdots.core_service.dto.ProblemStatementRequest;
 import com.connectingdots.core_service.dto.TranslationRequest;
 import com.connectingdots.core_service.dto.TranslationResponse;
-import com.connectingdots.core_service.entity.ContributorProfile;
 import com.connectingdots.core_service.entity.NgoProfile;
 import com.connectingdots.core_service.entity.ProblemStatement;
 import com.connectingdots.core_service.entity.User;
@@ -137,11 +136,11 @@ public class ProblemStatementService {
         }
         if (user.getRole() == User.Role.NGO) {
             return ngoProfileRepository.findByUser(user)
-                    .map(NgoProfile::getPreferredLanguage)
+                    .map(ngoProfile -> ngoProfile.getPreferredLanguage())
                     .orElse("en");
         } else if (user.getRole() == User.Role.CONTRIBUTOR) {
             return contributorProfileRepository.findByUser(user)
-                    .map(ContributorProfile::getPreferredLanguage)
+                    .map(profile -> profile.getPreferredLanguage())
                     .orElse("en");
         }
         return "en";

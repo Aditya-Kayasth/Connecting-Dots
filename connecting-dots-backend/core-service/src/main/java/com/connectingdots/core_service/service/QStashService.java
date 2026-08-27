@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class QStashService {
@@ -26,8 +27,8 @@ public class QStashService {
         try {
             String response = restClient.post()
                     .uri(java.net.URI.create(destinationEndpoint))
-                    .header(org.springframework.http.HttpHeaders.AUTHORIZATION, "Bearer " + qStashToken)
-                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + qStashToken)
+                    .contentType(MediaType.APPLICATION_JSON)
                     .body(message)
                     .retrieve()
                     .body(String.class);
@@ -35,7 +36,7 @@ public class QStashService {
             System.out.println("=================================================");
             System.out.println("QStash Publish SUCCESS: " + response);
             System.out.println("=================================================");
-        } catch (org.springframework.web.client.RestClientResponseException e) {
+        } catch (RestClientResponseException e) {
             System.err.println("=================================================");
             System.err.println("QSTASH API REJECTED REQUEST");
             System.err.println("Status Code: " + e.getStatusCode());

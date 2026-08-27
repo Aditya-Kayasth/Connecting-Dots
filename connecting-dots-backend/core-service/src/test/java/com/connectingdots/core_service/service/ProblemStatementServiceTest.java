@@ -126,6 +126,7 @@ public class ProblemStatementServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void shouldFilterByDomainAndStatus() {
         Page<ProblemStatement> mockPage = new PageImpl<>(Collections.emptyList());
         when(problemStatementRepository.findAll(any(Specification.class), any(PageRequest.class)))

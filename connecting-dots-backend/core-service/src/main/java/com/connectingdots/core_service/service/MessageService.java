@@ -1,10 +1,7 @@
 package com.connectingdots.core_service.service;
 
 import com.connectingdots.core_service.entity.Application;
-import com.connectingdots.core_service.entity.ContributorProfile;
 import com.connectingdots.core_service.entity.Message;
-import com.connectingdots.core_service.entity.ProblemStatement;
-import com.connectingdots.core_service.entity.User;
 import com.connectingdots.core_service.repository.ApplicationRepository;
 import com.connectingdots.core_service.repository.ContributorProfileRepository;
 import com.connectingdots.core_service.repository.MessageRepository;
@@ -65,15 +62,15 @@ public class MessageService {
 
     private boolean isContributorSender(Application application, UUID senderId) {
         return contributorProfileRepository.findById(application.getContributorProfileId())
-                .map(ContributorProfile::getUser)
-                .map(User::getId)
+                .map(profile -> profile.getUser())
+                .map(user -> user.getId())
                 .map(id -> id.equals(senderId))
                 .orElse(false);
     }
 
     private boolean isNgoSender(Application application, UUID senderId) {
         return problemStatementRepository.findById(application.getProblemId())
-                .map(ProblemStatement::getNgoProfile)
+                .map(problemStatement -> problemStatement.getNgoProfile())
                 .map(ngoProfile -> ngoProfile.getUser() != null && ngoProfile.getUser().getId().equals(senderId))
                 .orElse(false);
     }
@@ -84,7 +81,7 @@ public class MessageService {
         }
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
-                .map(User::getId)
+                .map(user -> user.getId())
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
     }
 }

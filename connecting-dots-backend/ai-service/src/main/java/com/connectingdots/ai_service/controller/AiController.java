@@ -1,6 +1,5 @@
 package com.connectingdots.ai_service.controller;
 
-import com.connectingdots.ai_service.dto.ProblemStatementRequest;
 import com.connectingdots.ai_service.service.AiProblemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;

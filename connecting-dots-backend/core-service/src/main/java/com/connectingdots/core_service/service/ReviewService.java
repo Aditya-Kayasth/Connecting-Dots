@@ -2,7 +2,6 @@ package com.connectingdots.core_service.service;
 
 import com.connectingdots.core_service.dto.ReviewRequest;
 import com.connectingdots.core_service.entity.Review;
-import com.connectingdots.core_service.entity.User;
 import com.connectingdots.core_service.repository.ProblemStatementRepository;
 import com.connectingdots.core_service.repository.ReviewRepository;
 import com.connectingdots.core_service.repository.UserRepository;
@@ -59,7 +58,7 @@ public class ReviewService {
         }
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
-                .map(User::getId)
+                .map(user -> user.getId())
                 .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
     }
 }

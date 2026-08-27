@@ -38,7 +38,7 @@ public class JwtUtil {
 
     // 5. The method the filter will use to extract the user's email from incoming tokens
     public String extractEmail(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractClaim(token, claims -> claims.getSubject());
     }
 
     // 6. The method that verifies the token's cryptographic seal hasn't been tampered with
@@ -52,7 +52,7 @@ public class JwtUtil {
     }
 
     private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+        return extractClaim(token, claims -> claims.getExpiration());
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

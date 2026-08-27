@@ -3,7 +3,6 @@ package com.connectingdots.core_service.service;
 import com.connectingdots.core_service.dto.ApplicationRequest;
 import com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest;
 import com.connectingdots.core_service.entity.Application;
-import com.connectingdots.core_service.entity.ContributorProfile;
 import com.connectingdots.core_service.entity.NgoProfile;
 import com.connectingdots.core_service.entity.ProblemStatement;
 import com.connectingdots.core_service.entity.User;
