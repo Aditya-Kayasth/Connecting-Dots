@@ -86,8 +86,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/contributors/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/ngos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/assignments/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/core/reviews/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/core/problem-statements/*/ai-update").permitAll()
+                        .requestMatchers("/api/v1/core/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
 

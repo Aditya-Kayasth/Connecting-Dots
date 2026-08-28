@@ -23,8 +23,26 @@ public class TestDatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        // 0. Ensure Admin User exists safely
+        try {
+            if (!userRepository.existsByEmail("admin@connectingdots.org")) {
+                org.springframework.security.crypto.password.PasswordEncoder encoder = 
+                    new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+                User adminUser = User.builder()
+                        .email("admin@connectingdots.org")
+                        .passwordHash(encoder.encode("Admin@1234"))
+                        .role(User.Role.ADMIN)
+                        .isActive(true)
+                        .build();
+                userRepository.save(adminUser);
+                System.out.println("[DATABASE SEEDER] Created Default Admin User: admin@connectingdots.org / Admin@1234");
+            }
+        } catch (Exception e) {
+            System.out.println("[DATABASE SEEDER] Admin user already exists or seeding skipped: " + e.getMessage());
+        }
+
         ProblemStatement problemStatement = problemStatementRepository.findAll().stream().findFirst().orElseGet(() -> {
-            
+
             // 1. Ensure User exists to avoid unique constraint violations on email
             User user = userRepository.findAll().stream().findFirst().orElseGet(() -> {
                 User newUser = User.builder()

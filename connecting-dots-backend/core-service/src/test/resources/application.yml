@@ -1,0 +1,28 @@
+spring:
+  config:
+    import: optional:file:.env[.properties],optional:file:../../.env[.properties]
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:test_cloud}
+  api-key: ${CLOUDINARY_API_KEY:test_key}
+  api-secret: ${CLOUDINARY_API_SECRET:test_secret}
+
+jwt:
+  secret: ${JWT_SECRET:test_jwt_secret_key_which_is_at_least_32_bytes_long_123456}
+
+internal:
+  service:
+    secret: ${INTERNAL_SERVICE_SECRET:test_internal_secret}
+
+qstash:
+  token: ${QSTASH_TOKEN:test_token}
+  api-url: "https://qstash-us-east-1.upstash.io/v2/publish/"
+  ai-webhook-url: ${AI_WEBHOOK_URL:http://localhost:8082/webhook}
+  current-signing-key: ${QSTASH_CURRENT_SIGNING_KEY:test_key}
+  next-signing-key: ${QSTASH_NEXT_SIGNING_KEY:test_key}
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
