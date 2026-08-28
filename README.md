@@ -1,15 +1,15 @@
 # Connecting Dots V2 — AI-Powered Civic Tech Platform
 
-![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js_16.3-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript_5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_4.0-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
 ![Java](https://img.shields.io/badge/Java_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis_7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Google Gemini](https://img.shields.io/badge/Gemini_3.5_Flash-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4.3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
 ---
 
@@ -23,11 +23,11 @@ The platform addresses a major industry bottleneck: NGOs often struggle to artic
 
 ## Executive Architecture
 
-The system is architected around a **decoupled 4-microservice backend** paired with an **AI-prompt-engineered Next.js 15 frontend**:
+The system is architected around a **decoupled 4-microservice backend** paired with an **AI-prompt-engineered Next.js 16 frontend**:
 
 ```
                               ┌───────────────────────────────────┐
-                              │  Connecting Dots Next.js 15 UI    │
+                              │  Connecting Dots Next.js 16 UI    │
                               └─────────────────┬─────────────────┘
                                                 │ (HTTP / Bearer JWT)
                                                 ▼
@@ -42,7 +42,7 @@ The system is architected around a **decoupled 4-microservice backend** paired w
 │           core-service (8081)             │       │            ai-service (8082)              │
 │  - User Auth & RBAC (JWT / BCrypt)        │       │  - Google Gemini 3.5 Flash Vision         │
 │  - Neon PostgreSQL & Flyway Migrations    │       │  - Multimodal OCR & Translation           │
-│  - Problem & Application State Machine    │       │  - Spring AI Structured Output            │
+│  - Problem & Application State Machine    │       │  - Spring AI 2.0.0 Structured Output      │
 └─────────────────────┬─────────────────────┘       └─────────────────────▲─────────────────────┘
                       │                                                   │
                       │ 1. Publish Event                                  │ 2. Webhook Delivery
@@ -71,23 +71,23 @@ Following v0 code generation, the frontend was extracted and integrated with the
 
 ---
 
-## Tech Stack
+## Verified Exact Tech Stack & Versions
 
-### Frontend Stack
-* **Framework**: Next.js 15 (App Router, Turbopack, Standalone Docker Runner)
-* **Library**: React 19, TypeScript 5.7
-* **Styling**: Tailwind CSS v4, custom CSS variable tokens, Lucide Icons
-* **State & Auth**: Client-side JWT session context, `localStorage` persistence, `next-themes`
-* **File Uploads**: Direct signed client-to-Cloudinary multipart uploads
-
-### Backend Stack
-* **Language & Runtime**: Java 25, Spring Boot 3.4
-* **Service Discovery**: Spring Cloud Netflix Eureka (`eureka-server` on port 8761)
-* **API Gateway**: Spring Cloud Gateway (Reactive Netty event-loop on port 8080)
-* **Database**: PostgreSQL (Neon Serverless DB), Flyway Migration Versioning (`V1`–`V10`)
-* **Caching & Rate Limiting**: Redis 7 Alpine (Token-Bucket algorithm via `#{@ipKeyResolver}`)
-* **Asynchronous Messaging**: Upstash QStash serverless HTTP queue with exponential backoff retries
-* **AI Ingestion**: Spring AI 2.0.0, Google Gemini 3.5 Flash Vision API
+| Layer | Component | Version in Source Code | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | **Next.js** | `16.3.3` | App Router, Turbopack, Standalone Docker Runner |
+| **Frontend** | **React** | `19.0` | UI Library |
+| **Frontend** | **TypeScript** | `5.7.3` | Static Type Safety |
+| **Frontend** | **Tailwind CSS** | `4.3.3` | Utility-First Styling System |
+| **Backend** | **Java** | `25` | Modern JDK Runtime |
+| **Backend** | **Spring Boot** | `4.0.7` | Microservices Core Framework |
+| **Backend** | **Spring Cloud** | `2025.1.2` | Eureka Service Registry & Spring Cloud Gateway |
+| **Backend** | **Spring AI** | `2.0.0` | Spring AI Model Integration Framework |
+| **AI Ingestion** | **Google GenAI SDK** | `1.67.0` | Multimodal Vision & Gemini LLM API Client |
+| **AI Model** | **Gemini Model** | `gemini-3.5-flash` | Multimodal OCR, Translation & JSON Structuring |
+| **Database** | **PostgreSQL** | `Neon Serverless` | Relational Persistence & Flyway Migrations |
+| **Cache & Security** | **Redis** | `7-alpine` | Token-Bucket Rate Limiter & Session Store |
+| **Queue** | **Upstash QStash** | `Serverless HTTP` | Asynchronous Queue & Exponential Retry Engine |
 
 ---
 
@@ -128,7 +128,7 @@ Access points:
 * **API Gateway**: `http://localhost:8080`
 * **Eureka Registry**: `http://localhost:8761`
 
-### 2. SeedTest Credentials
+### 2. Seeded Credentials
 
 | Role | Email | Password | Access Level |
 | :--- | :--- | :--- | :--- |
@@ -142,7 +142,7 @@ Access points:
 
 ```
 Connecting-Dots-V2/
-├── connecting-dots-frontend/      # Next.js 15 App Router Frontend (v0 AI Generated)
+├── connecting-dots-frontend/      # Next.js 16 App Router Frontend (v0 AI Generated)
 │   ├── app/                      # Next.js Pages & Routes (admin, ngo, contributor, profile)
 │   ├── components/               # Civic-tech UI Components & Status Banners
 │   ├── lib/                      # Centralized API Client & Cloudinary Upload Helper
@@ -152,6 +152,7 @@ Connecting-Dots-V2/
 │   ├── gateway-service/          # Spring Cloud Gateway & Redis Rate Limiter (8080)
 │   ├── core-service/             # Core Business API, JWT Auth & Flyway Migrations (8081)
 │   └── ai-service/               # Gemini 3.5 Flash Multimodal Ingestion Worker (8082)
+├── render.yaml                   # 1-Click Render Blueprint Manifest
 ├── docker-compose.yml            # Full-Stack Orchestration Manifest
 ├── ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md # Detailed Engineering & System Design Doc
 └── README.md                     # Master Repository Overview
