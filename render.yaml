@@ -1,0 +1,112 @@
+# Render Blueprint Deployment Spec for Connecting Dots V2 Microservices
+# Deploy for FREE on Render Hobby Tier (Up to 25 services included)
+
+services:
+  # 1. Service Discovery (Eureka Server)
+  - type: web
+    name: eureka-server
+    runtime: docker
+    dockerfilePath: ./connecting-dots-backend/eureka-server/Dockerfile
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: "8761"
+
+  # 2. Spring Cloud API Gateway
+  - type: web
+    name: gateway-service
+    runtime: docker
+    dockerfilePath: ./connecting-dots-backend/gateway-service/Dockerfile
+    plan: free
+    envVars:
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        fromService:
+          type: web
+          name: eureka-server
+          property: url
+          suffix: /eureka/
+      - key: REDIS_HOST
+        sync: false # Set to Upstash Cloud Redis Host in Render Dashboard
+      - key: REDIS_PORT
+        value: "6379"
+
+  # 3. Core Business & Database Service
+  - type: web
+    name: core-service
+    runtime: docker
+    dockerfilePath: ./connecting-dots-backend/core-service/Dockerfile
+    plan: free
+    envVars:
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        fromService:
+          type: web
+          name: eureka-server
+          property: url
+          suffix: /eureka/
+      - key: DB_URL
+        sync: false # Set to Neon PostgreSQL URL in Render Dashboard
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: "6379"
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: QSTASH_TOKEN
+        sync: false
+      - key: AI_WEBHOOK_URL
+        fromService:
+          type: web
+          name: gateway-service
+          property: url
+          suffix: /api/v1/ai/webhook
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: INTERNAL_SERVICE_SECRET
+        sync: false
+
+  # 4. Gemini AI Ingestion Worker
+  - type: web
+    name: ai-service
+    runtime: docker
+    dockerfilePath: ./connecting-dots-backend/ai-service/Dockerfile
+    plan: free
+    envVars:
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        fromService:
+          type: web
+          name: eureka-server
+          property: url
+          suffix: /eureka/
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SPRING_AI_GOOGLE_GENAI_API_KEY
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: "6379"
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: QSTASH_CURRENT_SIGNING_KEY
+        sync: false
+      - key: QSTASH_NEXT_SIGNING_KEY
+        sync: false
+      - key: INTERNAL_SERVICE_SECRET
+        sync: false
