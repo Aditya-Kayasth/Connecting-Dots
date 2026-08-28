@@ -6,6 +6,7 @@ services:
   - type: web
     name: eureka-server
     runtime: docker
+    dockerContext: ./connecting-dots-backend/eureka-server
     dockerfilePath: ./connecting-dots-backend/eureka-server/Dockerfile
     plan: free
     healthCheckPath: /actuator/health
@@ -17,6 +18,7 @@ services:
   - type: web
     name: gateway-service
     runtime: docker
+    dockerContext: ./connecting-dots-backend/gateway-service
     dockerfilePath: ./connecting-dots-backend/gateway-service/Dockerfile
     plan: free
     envVars:
@@ -35,6 +37,7 @@ services:
   - type: web
     name: core-service
     runtime: docker
+    dockerContext: ./connecting-dots-backend/core-service
     dockerfilePath: ./connecting-dots-backend/core-service/Dockerfile
     plan: free
     envVars:
@@ -79,6 +82,7 @@ services:
   - type: web
     name: ai-service
     runtime: docker
+    dockerContext: ./connecting-dots-backend/ai-service
     dockerfilePath: ./connecting-dots-backend/ai-service/Dockerfile
     plan: free
     envVars:
