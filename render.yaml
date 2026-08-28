@@ -26,10 +26,14 @@ services:
           name: eureka-server
           property: url
           suffix: /eureka/
+      - key: REDIS_URL
+        sync: false # Set to Upstash Cloud Redis rediss:// URI in Render Dashboard
       - key: REDIS_HOST
-        sync: false # Set to Upstash Cloud Redis Host in Render Dashboard
+        sync: false
       - key: REDIS_PORT
         value: "6379"
+      - key: REDIS_PASSWORD
+        sync: false
 
   # 3. Core Business & Database Service
   - type: web
@@ -55,6 +59,8 @@ services:
       - key: SPRING_DATASOURCE_USERNAME
         sync: false
       - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: REDIS_URL
         sync: false
       - key: REDIS_HOST
         sync: false
@@ -97,6 +103,8 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: SPRING_AI_GOOGLE_GENAI_API_KEY
+        sync: false
+      - key: REDIS_URL
         sync: false
       - key: REDIS_HOST
         sync: false
