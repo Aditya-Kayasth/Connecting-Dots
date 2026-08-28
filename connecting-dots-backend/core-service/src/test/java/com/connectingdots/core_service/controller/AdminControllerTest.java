@@ -1,9 +1,5 @@
 package com.connectingdots.core_service.controller;
 
-import com.connectingdots.core_service.entity.NgoProfile;
-import com.connectingdots.core_service.entity.User;
-import com.connectingdots.core_service.repository.NgoProfileRepository;
-import com.connectingdots.core_service.repository.UserRepository;
 import com.connectingdots.core_service.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +10,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,12 +19,6 @@ class AdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private NgoProfileRepository ngoProfileRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
