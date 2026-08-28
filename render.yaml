@@ -21,11 +21,7 @@ services:
     plan: free
     envVars:
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        fromService:
-          type: web
-          name: eureka-server
-          property: url
-          suffix: /eureka/
+        value: http://eureka-server:8761/eureka/
       - key: REDIS_URL
         sync: false # Set to Upstash Cloud Redis rediss:// URI in Render Dashboard
       - key: REDIS_HOST
@@ -43,11 +39,7 @@ services:
     plan: free
     envVars:
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        fromService:
-          type: web
-          name: eureka-server
-          property: url
-          suffix: /eureka/
+        value: http://eureka-server:8761/eureka/
       - key: DB_URL
         sync: false # Set to Neon PostgreSQL URL in Render Dashboard
       - key: DB_USERNAME
@@ -71,11 +63,7 @@ services:
       - key: QSTASH_TOKEN
         sync: false
       - key: AI_WEBHOOK_URL
-        fromService:
-          type: web
-          name: gateway-service
-          property: url
-          suffix: /api/v1/ai/webhook
+        sync: false
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -95,11 +83,7 @@ services:
     plan: free
     envVars:
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        fromService:
-          type: web
-          name: eureka-server
-          property: url
-          suffix: /eureka/
+        value: http://eureka-server:8761/eureka/
       - key: GEMINI_API_KEY
         sync: false
       - key: SPRING_AI_GOOGLE_GENAI_API_KEY
