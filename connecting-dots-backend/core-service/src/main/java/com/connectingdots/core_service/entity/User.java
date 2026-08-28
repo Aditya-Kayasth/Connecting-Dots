@@ -27,6 +27,6 @@ public class User extends BaseEntity {
     private boolean isActive = true;
 
     public enum Role {
-        NGO, CONTRIBUTOR
+        NGO, CONTRIBUTOR, ADMIN
     }
 }

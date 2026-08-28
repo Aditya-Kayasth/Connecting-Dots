@@ -29,4 +29,8 @@ public class NgoProfile extends BaseEntity {
     @Column(name = "preferred_language")
     @Builder.Default
     private String preferredLanguage = "en";
+
+    @Column(name = "is_verified", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean isVerified = false;
 }
