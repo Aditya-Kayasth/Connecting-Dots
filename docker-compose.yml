@@ -84,6 +84,16 @@ services:
       redis-cache:
         condition: service_started
 
+  frontend:
+    build: ./connecting-dots-frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - gateway-service
+
 networks:
   default:
     name: connecting-dots-network

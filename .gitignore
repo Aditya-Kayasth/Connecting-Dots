@@ -22,30 +22,7 @@ build/
 dist/
 .npm
 *.log
-# Environment & Secrets (CRITICAL)
-.env
-.env.local
-*.env
-application-local.yml
-application-local.properties
-
-# Java / Maven build outputs
-target/
-*.class
-*.jar
-*.war
-*.ear
-*.logs
-.mvn/wrapper/maven-wrapper.jar
-
-# Node / Frontend build outputs
-node_modules/
-.next/
-out/
-build/
-dist/
-.npm
-*.log
+*.zip
 
 # IDE & OS configuration files
 .idea/
