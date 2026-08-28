@@ -66,11 +66,15 @@ This document highlights the major technical decisions, architectural trade-offs
 - **Challenge:** An NGO may have multiple active problem statements assigned to different contributors. Message threads must remain strictly private between the NGO and each assigned contributor.
 - **Solution & Technical Decision:** Bound messages directly to a unique `application_id` (`application_messages` table). `MessageService` validates that the authenticated sender is either the specific contributor attached to that application or the NGO owning the problem statement. Contributors cannot view or post to chat threads outside their assigned application ID.
 
-### 4.2 Stateless Authentication & Role Authorization
-- **Challenge:** Verifying user identities and authorization roles across distributed microservices without relying on server-side HTTP sessions.
-- **Solution & Technical Decision:** Implemented stateless JWT authentication using JJWT (`io.jsonwebtoken 0.12.x`) and BCrypt password hashing. Tokens embed subject email, expiration (24h), and user roles (`ROLE_CONTRIBUTOR`, `ROLE_NGO`, `ROLE_ADMIN`). `JwtAuthenticationFilter` intercepts requests, validates the signature, and injects `GrantedAuthority` into Spring's `SecurityContextHolder`.
+### 4.2 Stateless Authentication, Role Authorization & Seeded Admin
+- **Challenge:** Verifying user identities and authorization roles across distributed microservices without relying on server-side HTTP sessions, while maintaining safe, unhackable administrative access.
+- **Solution & Technical Decision:** Implemented stateless JWT authentication using JJWT (`io.jsonwebtoken 0.12.x`) and BCrypt password hashing. Tokens embed subject email, expiration (24h), and user roles (`ROLE_CONTRIBUTOR`, `ROLE_NGO`, `ROLE_ADMIN`). Public self-registration is restricted to `NGO` and `CONTRIBUTOR` roles to prevent public privilege escalation. The default Admin account (`admin@connectingdots.org` / `Admin@1234`) is seeded securely via Flyway (`V10__seed_default_admin_user.sql`) using `ON CONFLICT (email) DO NOTHING`. Dedicated admin endpoints under `/api/v1/core/admin/**` enforce `hasRole('ADMIN')`.
 
-### 4.3 Production-Grade Database Integration Testing
+### 4.3 Direct NGO Uploads with Reactive Verification & Trust Badges
+- **Challenge:** Requiring pre-approval for NGOs creates friction and delays urgent problem uploads, while allowing unverified NGOs risks volunteer distrust.
+- **Solution & Technical Decision:** Implemented a hybrid verification model: NGOs register and post problems immediately (`OPEN`). Admin Dashboard endpoints (`GET /api/v1/core/admin/ngos` and `PUT /api/v1/core/admin/ngos/{id}/verify`) allow Admins to inspect profiles and toggle an `isVerified` flag (persisted via Flyway `V9__add_is_verified_to_ngo_profiles.sql`). Verified NGOs display trust badges on the frontend without blocking initial uploads.
+
+### 4.4 Production-Grade Database Integration Testing
 - **Challenge:** In-memory databases (like H2) often fail to catch PostgreSQL-specific syntax errors, column constraints, or transaction locking issues during automated testing.
 - **Solution & Technical Decision:** Configured Testcontainers in `core-service` integration test suites (`SecurityAccessIntegrationTest`). Tests spin up a real PostgreSQL Docker container during execution, ensuring test assertions accurately mirror production Neon PostgreSQL behavior.
 
