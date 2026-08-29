@@ -9,9 +9,9 @@ spring:
     import: optional:file:.env[.properties],optional:file:../../.env[.properties]
 
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:${DB_URL:jdbc:postgresql://localhost:5432/connecting_dots}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:postgres}}
     driver-class-name: org.postgresql.Driver
 
   data:
@@ -35,23 +35,23 @@ spring:
     locations: classpath:db/migration
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:super-secret-jwt-key-for-connecting-dots-2026}
 
 internal:
   service:
-    secret: ${INTERNAL_SERVICE_SECRET}
+    secret: ${INTERNAL_SERVICE_SECRET:internal-service-secret}
 
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME}
-  api-key: ${CLOUDINARY_API_KEY}
-  api-secret: ${CLOUDINARY_API_SECRET}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
 
 eureka:
   instance:
     prefer-ip-address: true
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
 
 management:
   endpoints:
@@ -61,8 +61,8 @@ management:
 
 qstash:
   url: ${QSTASH_URL:https://qstash-us-east-1.upstash.io}
-  token: ${QSTASH_TOKEN}
+  token: ${QSTASH_TOKEN:}
   api-url: "https://qstash-us-east-1.upstash.io/v2/publish/"
-  ai-webhook-url: ${AI_WEBHOOK_URL}
-  current-signing-key: ${QSTASH_CURRENT_SIGNING_KEY}
-  next-signing-key: ${QSTASH_NEXT_SIGNING_KEY}
+  ai-webhook-url: ${AI_WEBHOOK_URL:}
+  current-signing-key: ${QSTASH_CURRENT_SIGNING_KEY:}
+  next-signing-key: ${QSTASH_NEXT_SIGNING_KEY:}

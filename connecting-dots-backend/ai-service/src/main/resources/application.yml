@@ -8,6 +8,7 @@ spring:
     import: optional:file:.env[.properties],optional:file:../../.env[.properties]
   data:
     redis:
+      url: ${REDIS_URL:}
       host: ${REDIS_HOST:redis-cache}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
@@ -16,28 +17,28 @@ spring:
   ai:
     google:
       genai:
-        api-key: ${GEMINI_API_KEY}
+        api-key: ${GEMINI_API_KEY:${SPRING_AI_GOOGLE_GENAI_API_KEY:}}
         chat:
           options:
             model: gemini-3.5-flash
 
 gemini:
   api:
-    key: ${GEMINI_API_KEY}
+    key: ${GEMINI_API_KEY:${SPRING_AI_GOOGLE_GENAI_API_KEY:}}
 
 internal:
   service:
-    secret: ${INTERNAL_SERVICE_SECRET}
+    secret: ${INTERNAL_SERVICE_SECRET:internal-service-secret}
 
 qstash:
-  current-signing-key: ${QSTASH_CURRENT_SIGNING_KEY}
-  next-signing-key: ${QSTASH_NEXT_SIGNING_KEY}
+  current-signing-key: ${QSTASH_CURRENT_SIGNING_KEY:}
+  next-signing-key: ${QSTASH_NEXT_SIGNING_KEY:}
 
 eureka:
   instance:
     prefer-ip-address: true
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
     fetch-registry: true
     register-with-eureka: true
