@@ -32,6 +32,10 @@ export function clearAuthSession() {
   sessionStorage.clear()
 }
 
+export function logout() {
+  clearAuthSession()
+}
+
 export function getAuthUserId(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem('auth_user_id') || null
@@ -45,6 +49,13 @@ export function getAuthRole(): string | null {
 export function getAuthEmail(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem('auth_email') || extractEmailFromToken()
+}
+
+export function getSavedUser(): { email: string; role: string } | null {
+  const email = getAuthEmail()
+  const role = getAuthRole() || extractRoleFromToken() || 'GUEST'
+  if (!email) return null
+  return { email, role }
 }
 
 async function apiFetch<T>(
