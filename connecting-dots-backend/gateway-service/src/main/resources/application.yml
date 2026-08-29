@@ -44,46 +44,19 @@ spring:
             redis-rate-limiter.burstCapacity: 20
             redis-rate-limiter.requestedTokens: 1
             key-resolver: "#{@ipKeyResolver}"
-      server:
-        webflux:
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
       routes:
         - id: core-service-route
-          uri: lb://core-service
+          uri: ${CORE_SERVICE_URL:https://core-service-9mpw.onrender.com}
           predicates:
             - Path=/api/v1/core/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
-                key-resolver: "#{@ipKeyResolver}"
         - id: auth-service-route
-          uri: lb://core-service
+          uri: ${CORE_SERVICE_URL:https://core-service-9mpw.onrender.com}
           predicates:
             - Path=/api/v1/auth/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
-                key-resolver: "#{@ipKeyResolver}"
         - id: ai-service-route
-          uri: lb://ai-service
+          uri: ${AI_SERVICE_URL:https://ai-service-6r96.onrender.com}
           predicates:
             - Path=/api/v1/ai/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
-                key-resolver: "#{@ipKeyResolver}"
 
 eureka:
   client:
