@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  ...(process.env.DOCKER_BUILD ? { output: 'standalone' } : {}),
   typescript: {
     ignoreBuildErrors: true,
   },

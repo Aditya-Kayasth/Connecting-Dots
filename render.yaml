@@ -23,7 +23,7 @@ services:
     plan: free
     envVars:
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: http://eureka-server:8761/eureka/
+        value: https://eureka-server-06pj.onrender.com/eureka/
       - key: REDIS_URL
         sync: false
       - key: REDIS_HOST
@@ -42,7 +42,7 @@ services:
     plan: free
     envVars:
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: http://eureka-server:8761/eureka/
+        value: https://eureka-server-06pj.onrender.com/eureka/
       - key: DB_URL
         sync: false
       - key: DB_USERNAME
@@ -87,7 +87,7 @@ services:
     plan: free
     envVars:
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: http://eureka-server:8761/eureka/
+        value: https://eureka-server-06pj.onrender.com/eureka/
       - key: GEMINI_API_KEY
         sync: false
       - key: SPRING_AI_GOOGLE_GENAI_API_KEY

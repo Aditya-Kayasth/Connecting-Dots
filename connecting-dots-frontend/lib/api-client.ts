@@ -21,6 +21,7 @@ export function setAuthSession(token: string, role?: string, userId?: string, em
   if (role) localStorage.setItem('auth_role', role)
   if (userId) localStorage.setItem('auth_user_id', userId)
   if (email) localStorage.setItem('auth_email', email)
+  window.dispatchEvent(new Event('storage'))
 }
 
 export function clearAuthSession() {
@@ -30,6 +31,7 @@ export function clearAuthSession() {
   localStorage.removeItem('auth_user_id')
   localStorage.removeItem('auth_email')
   sessionStorage.clear()
+  window.dispatchEvent(new Event('storage'))
 }
 
 export function logout() {
@@ -120,7 +122,7 @@ export async function apiDelete<T>(endpoint: string): Promise<T> {
 }
 
 /**
- * Extract admin email from Bearer token JWT (assumes email is in payload sub/email)
+ * Extract admin email from Bearer token JWT (assumes email is in payload)
  */
 export function extractEmailFromToken(): string | null {
   const token = getAuthToken()
@@ -152,7 +154,7 @@ export function extractRoleFromToken(): string | null {
 }
 
 /**
- * Check if current user is admin based on token email or role claim
+ * Check if current user is admin based on token email or role
  */
 export function isAdminUser(): boolean {
   const email = extractEmailFromToken()

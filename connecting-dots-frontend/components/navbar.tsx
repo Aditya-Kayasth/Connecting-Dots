@@ -1,0 +1,11 @@
+'use client'
+import { useEffect, useState } from 'react'
+import AuthModal from './auth-modal'
+
+type Session = { token: string; role: string; email: string }
+export default function Navbar() { const [session, setSession] = useState<Session | null>(null); const [authOpen, setAuthOpen] = useState(false)
+  useEffect(() => { const read = () => { const token = localStorage.getItem('auth_token'); const role = localStorage.getItem('auth_role'); const email = localStorage.getItem('auth_email'); setSession(token && role ? { token, role, email: email || '' } : null) }; read(); const sync = () => read(); const open = () => setAuthOpen(true); window.addEventListener('storage', sync); window.addEventListener('dots:open-auth', open); return () => { window.removeEventListener('storage', sync); window.removeEventListener('dots:open-auth', open) } }, [])
+  function success(token: string, role: string, email: string) { localStorage.setItem('auth_token', token); localStorage.setItem('auth_role', role.toUpperCase()); localStorage.setItem('auth_email', email); setSession({ token, role: role.toUpperCase(), email }); window.dispatchEvent(new StorageEvent('storage')) }
+  function signOut() { localStorage.removeItem('auth_token'); localStorage.removeItem('auth_role'); localStorage.removeItem('auth_email'); setSession(null); window.dispatchEvent(new StorageEvent('storage')) }
+  const role = session?.role; return <><nav className="topbar"><a className="brand" href="/">connecting<span>dots</span></a><div className="nav-links">{!session ? <><a href="#problems">Problems</a><a href="#ngos">NGOs</a><a href="#contributors">Contributors</a><button className="primary-button nav-signin" onClick={() => setAuthOpen(true)}>Sign in</button></> : <><a href="/">Explore</a>{role === 'NGO' && <a className="active-nav" href="/ngo">NGO Workspace</a>}{role === 'CONTRIBUTOR' && <a className="active-nav" href="/contributor">My Applications</a>}{role === 'ADMIN' && <a className="active-nav" href="/admin">Admin Dashboard</a>}<a href="/profile">My Profile</a><button className="outline-button" onClick={signOut}>Sign out ({session.email})</button></>}</div></nav><AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={success} /></>
+}

@@ -1,134 +1,16 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
-import { apiRequest, apiPost } from '@/lib/api-client'
+import { useEffect, useState } from 'react'
+import { apiRequest } from '@/lib/api-client'
+import ReviewForm from '@/components/review-form'
 
-interface MessageItem {
-  id?: string
-  senderId?: string
-  author?: string
-  text?: string
-  content?: string
-  createdAt?: string
-  time?: string
-}
+type Message = { id?: string; senderId?: string; author?: string; text: string; timestamp?: string; time?: string }
+type Application = { status: string; problemTitle: string; problemDescription: string; ngoName: string; applicantName: string; applicantEmail: string }
 
 export default function ApplicationDetail({ params }: { params: Promise<{ applicationId: string }> }) {
-  const resolvedParams = use(params)
-  const id = resolvedParams.applicationId || 'app-441'
-
-  const [messageText, setMessageText] = useState('')
-  const [messages, setMessages] = useState<MessageItem[]>([
-    { author: 'Open Hands Kenya', text: 'We are excited to work with you on this project.', time: '10:42' },
-    { author: 'Alex Morgan', text: 'Thank you. I will share an initial project outline tomorrow.', time: '11:08' },
-  ])
-
-  useEffect(() => {
-    const poll = async () => {
-      try {
-        const fetched = await apiRequest<MessageItem[]>(`/api/v1/core/applications/${id}/messages`)
-        if (Array.isArray(fetched) && fetched.length > 0) {
-          const normalized = fetched.map(m => ({
-            id: m.id,
-            author: m.senderId === 'self' ? 'You' : (m.author || 'NGO Partner'),
-            text: m.content || m.text || '',
-            time: m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (m.time || 'Just now')
-          }))
-          setMessages(normalized)
-        }
-      } catch {
-        /* Keep existing thread */
-      }
-    }
-
-    poll()
-    const timer = window.setInterval(poll, 5000)
-    return () => window.clearInterval(timer)
-  }, [id])
-
-  async function send() {
-    if (!messageText.trim()) return
-    const textToSend = messageText.trim()
-    const optimisticMessage: MessageItem = { author: 'Alex Morgan', text: textToSend, time: 'Just now' }
-    setMessages((current) => [...current, optimisticMessage])
-    setMessageText('')
-
-    try {
-      await apiPost(`/api/v1/core/applications/${id}/messages`, { content: textToSend })
-    } catch {
-      /* Keep optimistic message visible */
-    }
-  }
-
-  return (
-    <main className="workspace-shell">
-      <nav className="topbar">
-        <a className="brand" href="/">connecting<span>dots</span></a>
-        <div className="nav-links">
-          <a href="/contributor">Contributor workspace</a>
-          <a href="/ngo">NGO workspace</a>
-          <a href="/profile">Profile</a>
-        </div>
-      </nav>
-
-      <div className="detail-shell">
-        <a className="back-link" href="/contributor">← Back to applications</a>
-        
-        <div className="detail-header">
-          <div>
-            <span className="eyebrow">Application detail · {id}</span>
-            <h1>Build a volunteer matching portal</h1>
-            <p>Open Hands Kenya · Civic tech · Status <span className="status-badge status-accepted">ACCEPTED</span></p>
-          </div>
-          <div className="detail-avatar avatar avatar-green">OH</div>
-        </div>
-
-        <div className="detail-grid">
-          <section className="context-card">
-            <span className="eyebrow">Problem context</span>
-            <h2>A better way for local volunteers to find community work.</h2>
-            <p>Open Hands Kenya needs a lightweight matching portal where volunteers can discover, apply to, and follow projects in their neighborhoods.</p>
-            <div className="owner-block">
-              <div className="avatar avatar-gold">OH</div>
-              <div>
-                <strong>Open Hands Kenya</strong>
-                <small>NGO owner · Nairobi, Kenya</small>
-              </div>
-            </div>
-          </section>
-
-          <section className="thread-card">
-            <div className="section-heading">
-              <div>
-                <span className="eyebrow">Private thread</span>
-                <h2>Application messages</h2>
-              </div>
-              <span className="section-count">Scoped to {id}</span>
-            </div>
-
-            <div className="message-list">
-              {messages.map((m, i) => (
-                <div className={`message ${m.author === 'Alex Morgan' || m.author === 'You' ? 'message-self' : ''}`} key={m.id || i}>
-                  <strong>{m.author}</strong>
-                  <p>{m.text}</p>
-                  <small>{m.time}</small>
-                </div>
-              ))}
-            </div>
-
-            <div className="message-compose">
-              <textarea
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Write a message to the NGO..."
-                aria-label="Message"
-              />
-              <button className="primary-button" onClick={send}>Send message</button>
-              <small>Messages refresh by polling this application only.</small>
-            </div>
-          </section>
-        </div>
-      </div>
-    </main>
-  )
+  const [id, setId] = useState(''); const [application, setApplication] = useState<Application>({ status: 'ACCEPTED', problemTitle: 'Build a volunteer matching portal', problemDescription: 'Open Hands Kenya needs a lightweight matching portal where volunteers can discover, apply to, and follow projects in their neighborhoods.', ngoName: 'Open Hands Kenya', applicantName: 'Alex Morgan', applicantEmail: 'alex@example.com' }); const [message, setMessage] = useState(''); const [messages, setMessages] = useState<Message[]>([]); const [loading, setLoading] = useState(true); const [reviewOpen, setReviewOpen] = useState(false)
+  useEffect(() => { params.then(value => setId(value.applicationId)) }, [params])
+  useEffect(() => { if (!id) return; const poll = () => apiRequest<Message[]>(`/api/v1/core/messages/application/${id}`).then(data => setMessages(Array.isArray(data) ? data : [])).catch(() => setMessages(current => current)).finally(() => setLoading(false)); poll(); const timer = window.setInterval(poll, 5000); return () => window.clearInterval(timer) }, [id])
+  async function send() { if (!message.trim()) return; const text = message.trim(); setMessages(current => [...current, { author: 'Alex Morgan', senderId: 'current-user', text, timestamp: new Date().toISOString() }]); setMessage(''); try { await apiRequest('/api/v1/core/messages', { method: 'POST', body: { applicationId: id, message: text } }) } catch {} }
+  return <main className="workspace-shell"><div className="detail-shell"><a className="back-link" href="/contributor">← Back to applications</a><div className="detail-header"><div><span className="eyebrow">Application detail · {id}</span><h1>{application.problemTitle}</h1><p>{application.ngoName} · Status <span className={`status-badge status-${application.status.toLowerCase()}`}>{application.status}</span></p></div><div className="detail-avatar avatar avatar-green">{application.ngoName.split(' ').map(word => word[0]).join('').slice(0, 2)}</div></div><div className="detail-grid"><section className="context-card"><span className="eyebrow">Problem context</span><h2>{application.problemTitle}</h2><p>{application.problemDescription}</p><div className="owner-block"><div className="avatar avatar-gold">{application.ngoName.split(' ').map(word => word[0]).join('').slice(0, 2)}</div><div><strong>{application.ngoName}</strong><small>NGO owner · application {id}</small></div></div>{application.status === 'COMPLETED' && <button className="primary-button" onClick={() => setReviewOpen(true)}>Leave a Review →</button>}</section><section className="thread-card"><div className="section-heading"><div><span className="eyebrow">Private 1-on-1 thread</span><h2>Application messages</h2></div><span className="section-count">Scoped to {id}</span></div>{loading ? <div className="empty-state">Loading messages…</div> : messages.length === 0 ? <div className="empty-state">Start the conversation with the NGO...<small>Only messages for this application appear here.</small></div> : <div className="message-list">{messages.map((item, index) => { const self = item.senderId === 'current-user' || item.author === 'Alex Morgan'; return <div className={`message ${self ? 'message-self' : ''}`} key={item.id || `${item.timestamp}-${index}`}><div className="message-author"><span className="message-avatar">{(item.author || (self ? 'Alex Morgan' : application.ngoName)).split(' ').map(word => word[0]).join('').slice(0, 2)}</span><strong>{item.author || (self ? 'Alex Morgan' : application.ngoName)}</strong></div><p>{item.text}</p><small>{item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : item.time}</small></div> })}</div>}<div className="message-compose"><textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Write a message to the NGO..." aria-label="Message" /><button className="primary-button" onClick={send}>Send message</button><small>Messages poll every 5 seconds for this application only.</small></div></section></div></div>{reviewOpen && <div className="modal-backdrop" role="dialog" aria-modal="true"><section className="edit-modal"><button className="close-button" onClick={() => setReviewOpen(false)} aria-label="Close review">×</button><ReviewForm applicationId={id} recipientName={application.ngoName} /></section></div>}</main>
 }
