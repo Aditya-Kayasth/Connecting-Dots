@@ -19,6 +19,13 @@ export default function ProfilePage() {
   const [editForm, setEditForm] = useState(profile)
   const [saveMessage, setSaveMessage] = useState('')
 
+  const getInitials = (fullName: string) => {
+    if (!fullName || !fullName.trim()) return 'CD'
+    const parts = fullName.trim().split(' ')
+    if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    return fullName.slice(0, 2).toUpperCase()
+  }
+
   const handleSave = async () => {
     setProfile(editForm)
     setIsEditing(false)
@@ -81,7 +88,7 @@ export default function ProfilePage() {
         )}
 
         <section className="profile-hero">
-          <div className="profile-avatar">MC</div>
+          <div className="profile-avatar">{getInitials(profile.name)}</div>
           <div className="w-full">
             <span className="eyebrow">Technical contributor</span>
             
@@ -103,7 +110,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Full Name</label>
                   <input
-                    className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-teal-500"
                     value={editForm.name}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   />
@@ -112,13 +119,13 @@ export default function ProfilePage() {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Title & Location</label>
                   <div className="grid grid-cols-2 gap-2">
                     <input
-                      className="px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md"
+                      className="px-3 py-1.5 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md"
                       value={editForm.title}
                       onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                       placeholder="Title"
                     />
                     <input
-                      className="px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md"
+                      className="px-3 py-1.5 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md"
                       value={editForm.location}
                       onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
                       placeholder="Location"
@@ -128,7 +135,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Skills Summary</label>
                   <input
-                    className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md"
+                    className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md"
                     value={editForm.skills}
                     onChange={(e) => setEditForm({ ...editForm, skills: e.target.value })}
                   />
@@ -136,7 +143,7 @@ export default function ProfilePage() {
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Portfolio URL</label>
                   <input
-                    className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md"
+                    className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-md"
                     value={editForm.portfolioUrl}
                     onChange={(e) => setEditForm({ ...editForm, portfolioUrl: e.target.value })}
                   />

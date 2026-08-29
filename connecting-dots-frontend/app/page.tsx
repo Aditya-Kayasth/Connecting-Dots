@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react"
 import PublicExplorer from "@/components/public-explorer"
+import AuthModal from "@/components/auth-modal"
 import { getSavedUser, logout } from "@/lib/api-client"
 
 export default function Home() {
   const [user, setUser] = useState<{ email: string; role: string } | null>(null)
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
 
   useEffect(() => {
     setUser(getSavedUser())
@@ -24,14 +26,18 @@ export default function Home() {
           <a href="/profile">Profiles</a>
           {user?.role === "NGO" && <a href="/ngo">NGO workspace</a>}
           {user?.role === "CONTRIBUTOR" && <a href="/contributor">My applications</a>}
-          {user?.role === "ROLE_ADMIN" && <a href="/admin" className="font-semibold text-emerald-600 dark:text-emerald-400">Admin</a>}
+          {(user?.role === "ROLE_ADMIN" || user?.role === "ADMIN" || user?.email === "admin@connectingdots.org") && (
+            <a href="/admin" className="font-semibold text-emerald-600 dark:text-emerald-400">Admin</a>
+          )}
 
           {user ? (
             <button className="outline-button" onClick={() => { logout(); setUser(null); location.reload(); }}>
               Sign out ({user.email.split('@')[0]})
             </button>
           ) : (
-            <a href="/profile" className="outline-button">Sign in</a>
+            <button className="outline-button" onClick={() => setIsAuthOpen(true)}>
+              Sign in
+            </button>
           )}
         </div>
       </nav>
@@ -54,6 +60,15 @@ export default function Home() {
       </section>
 
       <PublicExplorer />
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onSuccess={(u) => {
+          setUser(u)
+          setIsAuthOpen(false)
+        }}
+      />
 
       <footer>
         <span>© 2026 Connecting Dots</span>
