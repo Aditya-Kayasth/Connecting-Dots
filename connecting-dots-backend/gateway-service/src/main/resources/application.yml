@@ -17,6 +17,9 @@ spring:
     password: ${REDIS_PASSWORD:}
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 10000
+        response-timeout: 60s
       globalcors:
         add-to-simple-url-handler-mapping: true
         cors-configurations:
