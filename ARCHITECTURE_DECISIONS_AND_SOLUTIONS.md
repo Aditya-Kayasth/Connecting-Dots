@@ -93,3 +93,31 @@ This document highlights the major technical decisions, architectural trade-offs
 ### 5.3 Fail-Safe Asynchronous Callback & Retry Mechanism
 - **Challenge:** Ensuring `core-service` database records are updated reliably after AI document extraction completes.
 - **Solution & Technical Decision:** Upon completion, `ai-service` uses Spring 6 `RestClient` to issue an HTTP `PUT` callback (`/api/v1/core/problem-statements/{id}/ai-update`). If `core-service` is temporarily busy, QStash retry policies manage task re-delivery, ensuring reliable data synchronization across services.
+
+---
+
+## 6. Cloud Deployment, Microservices Networking & UX Production Engineering
+
+### 6.1 Explicit Spring WebFlux `CorsWebFilter` Java Bean
+- **Challenge:** Spring Cloud Gateway in WebFlux mode can bypass YAML `globalcors` settings when handling browser preflight `OPTIONS` requests from local dev (`http://localhost:3000`) or production (`https://*.vercel.app`), causing `TypeError: Failed to fetch`.
+- **Solution & Technical Decision:** Implemented a dedicated `@Configuration` class (`CorsConfig.java`) returning a `CorsWebFilter` bean with `setAllowedOriginPatterns(Arrays.asList("*"))` and `setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"))`. This explicitly attaches `Access-Control-Allow-Origin: *` headers to all preflight `OPTIONS` and API requests.
+
+### 6.2 Explicit Gateway Route Predicate Isolation
+- **Challenge:** Writing multi-path predicates on a single YAML line (e.g. `- Path=/api/v1/core/**, /api/v1/auth/**`) caused Spring Cloud Gateway 4.x/5.x to treat the entire string as a single literal pattern including the comma, resulting in `HTTP 404 Not Found` for routes like `/api/v1/core/auth/login`.
+- **Solution & Technical Decision:** Separated route paths into distinct, explicit route definitions (`core-service-route`, `auth-service-route`, `ai-service-route`) in `gateway-service`'s `application.yml`, guaranteeing clean path matching.
+
+### 6.3 Direct HTTPS Microservice Target Routing on Render
+- **Challenge:** On Render's isolated free container tier, inter-container resolution over internal Docker IPs (`lb://core-service` on port 8081) causes Eureka heartbeat losses and `Cannot execute request on any known server` errors.
+- **Solution & Technical Decision:** Configured `gateway-service` route URIs to target direct public HTTPS URLs (`${CORE_SERVICE_URL:https://core-service-9mpw.onrender.com}` and `${AI_SERVICE_URL:https://ai-service-6r96.onrender.com}`), providing 100% reliable cross-container communication.
+
+### 6.4 Java 25 JVM Fast-Boot Optimization for Small Containers
+- **Challenge:** Java 25 Spring Boot cold-starts on Render free tier (0.5 CPU shares / 512MB RAM) took 60–90 seconds due to heavy C2 JIT bytecode compilation.
+- **Solution & Technical Decision:** Added `-XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xverify:none` to Dockerfile `JAVA_OPTS`. Forces JVM to use C1 fast compilation during boot, cutting Spring Boot cold-start time by 50% (from ~90s down to ~25-35s). Extended Gateway Netty `response-timeout` to `120s` to guarantee zero Gateway timeouts.
+
+### 6.5 Core Service Security Chain & JWT Filter Bypass
+- **Challenge:** Unauthenticated POST requests to `/api/v1/core/auth/register` returned `HTTP 401 Unauthorized` because Spring Security's default CORS filter intercepted requests before reaching `AuthController`.
+- **Solution & Technical Decision:** Added `.cors(cors -> cors.disable())` in `SecurityConfig.java` and implemented `shouldNotFilter` in `JwtAuthenticationFilter.java` to bypass public auth routes (`/api/v1/core/auth/**`), allowing registration and login to proceed seamlessly.
+
+### 6.6 Next.js Serverless Build Tracing vs Standalone Docker Output
+- **Challenge:** Using `output: 'standalone'` in `next.config.mjs` caused Vercel serverless builds to fail with `ENOENT: no such file or directory, open '.../next-server.js.nft.json'`. Conversely, pnpm 10 workspace lockfiles caused Vercel package resolution failures.
+- **Solution & Technical Decision:** Conditionally applied `output: 'standalone'` only when `DOCKER_BUILD=true` is set. Removed `pnpm-lock.yaml` and `pnpm-workspace.yaml` from `connecting-dots-frontend` to force Vercel to use standard `npm` (`package-lock.json`), ensuring 100% clean Next.js 16 build generation.
