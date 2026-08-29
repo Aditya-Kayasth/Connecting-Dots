@@ -27,9 +27,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserRepository userRepository;
 
-    // 1. UserDetailsService: Tells Spring how to fetch users from our DB and
-    // translates
-    // our custom User entity into a standard Spring Security User object.
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> {
@@ -44,39 +41,28 @@ public class SecurityConfig {
         };
     }
 
-    // 2. PasswordEncoder: The industry-standard BCrypt algorithm used to hash
-    // passwords.
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 3. AuthenticationProvider: The engine that compares the password the user
-    // typed
-    // against the hashed password fetched from the database.
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        // Pass the userDetailsService directly into the constructor!
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
-    // 4. AuthenticationManager: The top-level manager we will use later in our
-    // AuthController to actually log people in.
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // 5. SecurityFilterChain: The actual rules for our API endpoints!
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Disable CSRF because we use stateless JWTs, not browser cookies
                 .csrf(csrf -> csrf.disable())
-
-                // Define our URL access rules
+                .cors(cors -> cors.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/core/auth/**").permitAll()
                         .requestMatchers("/api/v1/core/ping").permitAll()
@@ -90,20 +76,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/core/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-
-                // Tell Spring not to store sessions in memory (enforcing Stateless
-                // architecture)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
                         new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)
                 ))
-
-                // Register our Authentication engine
                 .authenticationProvider(authenticationProvider())
-
-                // Put our custom JWT filter in front of the line! It intercepts requests before
-                // they reach the controllers.
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
