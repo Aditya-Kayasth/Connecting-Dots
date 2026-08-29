@@ -4,7 +4,6 @@ import com.connectingdots.core_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -18,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -64,16 +64,18 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/core/auth/**", "/api/v1/auth/**", "/api/v1/core/ping", "/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/core/auth/**", "/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/core/problem-statements/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/core/problems/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/core/profiles/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/core/contributors/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/core/ngos/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/core/assignments/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/core/problem-statements/*/ai-update").permitAll()
-                        .requestMatchers("/api/v1/core/admin/**").hasRole("ADMIN")
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/auth/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/ping")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/problem-statements/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/problems/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/profiles/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/contributors/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/ngos/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/assignments/**", "GET")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/problem-statements/*/ai-update", "PUT")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/v1/core/admin/**")).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
