@@ -64,8 +64,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/core/auth/**").permitAll()
-                        .requestMatchers("/api/v1/core/ping").permitAll()
+                        .requestMatchers("/api/v1/core/auth/**", "/api/v1/auth/**", "/api/v1/core/ping", "/actuator/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/core/auth/**", "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/problem-statements/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/problems/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/profiles/**").permitAll()
@@ -77,9 +77,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(
-                        new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)
-                ))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
