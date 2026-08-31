@@ -11,4 +11,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AuthResponse {
     private String token; // This is the JWT wristband we send back!
+    private String role;  // User role (ADMIN, NGO, CONTRIBUTOR)
+    private java.util.UUID userId; // Add the unique user database identifier
+
+    public AuthResponse(String token) {
+        this.token = token;
+        this.role = null;
+        this.userId = null;
+    }
 }
