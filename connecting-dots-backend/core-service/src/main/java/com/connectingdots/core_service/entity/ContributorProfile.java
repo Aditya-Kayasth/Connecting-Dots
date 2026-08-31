@@ -29,9 +29,20 @@ public class ContributorProfile extends BaseEntity {
     @Column(name = "portfolio_url")
     private String portfolioUrl;
 
+    @Column(name = "title")
+    @Builder.Default
+    private String title = "Technical Contributor";
+
+    @Column(name = "location")
+    @Builder.Default
+    private String location = "Community Member";
+
     @Column(name = "preferred_language")
     @Builder.Default
     private String preferredLanguage = "en";
+
+    @Column(name = "contact_number")
+    private String contactNumber;
 
     @Column(name = "completed_projects")
     @Builder.Default
