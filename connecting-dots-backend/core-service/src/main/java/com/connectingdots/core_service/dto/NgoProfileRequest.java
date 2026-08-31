@@ -1,16 +1,19 @@
 package com.connectingdots.core_service.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public record NgoProfileRequest(
         @NotBlank(message = "Organization name is required")
         String organizationName,
         @NotBlank(message = "Domain is required")
         String domain,
+        @Pattern(regexp = "^$|^\\+?[0-9]{7,15}$", message = "Please enter a valid phone number (7 to 15 digits)")
         String contactNumber,
-        String preferredLanguage
+        String preferredLanguage,
+        String location
 ) {
     public NgoProfileRequest(String organizationName, String domain, String contactNumber) {
-        this(organizationName, domain, contactNumber, "en");
+        this(organizationName, domain, contactNumber, "en", "Global Community");
     }
 }
