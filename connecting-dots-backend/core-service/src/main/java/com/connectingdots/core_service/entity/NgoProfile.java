@@ -30,6 +30,10 @@ public class NgoProfile extends BaseEntity {
     @Builder.Default
     private String preferredLanguage = "en";
 
+    @Column(name = "location")
+    @Builder.Default
+    private String location = "Global Community";
+
     @Column(name = "is_verified", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean isVerified = false;
