@@ -25,15 +25,20 @@ public class ApplicationController {
         return ResponseEntity.ok(application);
     }
 
+    @GetMapping("/{applicationId}")
+    public ResponseEntity<com.connectingdots.core_service.dto.ApplicationDetailResponse> getApplicationDetails(@PathVariable UUID applicationId) {
+        return ResponseEntity.ok(applicationService.getApplicationDetails(applicationId));
+    }
+
     @GetMapping("/contributor/{contributorProfileId}")
-    public ResponseEntity<List<Application>> getContributorApplications(@PathVariable UUID contributorProfileId) {
-        List<Application> applications = applicationService.getApplicationsByContributor(contributorProfileId);
+    public ResponseEntity<List<com.connectingdots.core_service.dto.ApplicationResponse>> getContributorApplications(@PathVariable UUID contributorProfileId) {
+        List<com.connectingdots.core_service.dto.ApplicationResponse> applications = applicationService.getApplicationsByContributor(contributorProfileId);
         return ResponseEntity.ok(applications);
     }
 
     @GetMapping("/problem/{problemId}")
-    public ResponseEntity<List<Application>> getProblemApplications(@PathVariable UUID problemId) {
-        List<Application> applications = applicationService.getApplicationsForProblem(problemId);
+    public ResponseEntity<List<com.connectingdots.core_service.dto.ApplicationResponse>> getProblemApplications(@PathVariable UUID problemId) {
+        List<com.connectingdots.core_service.dto.ApplicationResponse> applications = applicationService.getApplicationsForProblem(problemId);
         return ResponseEntity.ok(applications);
     }
 
