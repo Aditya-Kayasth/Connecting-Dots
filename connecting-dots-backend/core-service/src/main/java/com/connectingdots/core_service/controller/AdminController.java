@@ -1,6 +1,7 @@
 package com.connectingdots.core_service.controller;
 
 import com.connectingdots.core_service.entity.User;
+import com.connectingdots.core_service.repository.ContributorProfileRepository;
 import com.connectingdots.core_service.repository.ApplicationRepository;
 import com.connectingdots.core_service.repository.NgoProfileRepository;
 import com.connectingdots.core_service.repository.ProblemStatementRepository;
@@ -23,6 +24,7 @@ public class AdminController {
     private final ProblemStatementRepository problemStatementRepository;
     private final ApplicationRepository applicationRepository;
     private final NgoProfileRepository ngoProfileRepository;
+    private final ContributorProfileRepository contributorProfileRepository;
 
     @Data
     @Builder
@@ -50,12 +52,49 @@ public class AdminController {
     }
 
     @DeleteMapping("/users/{id}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        if (userRepository.existsById(id)) {
-            userRepository.deleteById(id);
+        String currentEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(currentEmail).orElse(null);
+        if (currentUser != null && currentUser.getId().equals(id)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Unauthorized: An admin cannot delete their own account."
+            );
+        }
+
+        User targetUser = userRepository.findById(id).orElse(null);
+        if (targetUser != null && targetUser.getRole() == User.Role.ADMIN) {
+            long adminCount = userRepository.findAll().stream()
+                     .filter(u -> u.getRole() == User.Role.ADMIN)
+                     .count();
+            if (adminCount <= 1) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.BAD_REQUEST,
+                        "Unauthorized: Cannot delete the last admin account."
+                );
+            }
+        }
+
+        if (targetUser != null) {
+            ngoProfileRepository.findByUser(targetUser).ifPresent(p -> {
+                ngoProfileRepository.delete(p);
+                ngoProfileRepository.flush();
+            });
+            contributorProfileRepository.findByUser(targetUser).ifPresent(p -> {
+                contributorProfileRepository.delete(p);
+                contributorProfileRepository.flush();
+            });
+            userRepository.delete(targetUser);
+            userRepository.flush();
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/problems")
+    public ResponseEntity<List<com.connectingdots.core_service.entity.ProblemStatement>> getAllProblems() {
+        return ResponseEntity.ok(problemStatementRepository.findAll());
     }
 
     @DeleteMapping("/problems/{id}")
