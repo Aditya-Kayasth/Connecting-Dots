@@ -13,19 +13,19 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/core/reviews")
+@RequestMapping("/api/v1/core")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PostMapping
+    @PostMapping("/reviews")
     public ResponseEntity<Review> submitReview(@Valid @RequestBody ReviewRequest request) {
         Review review = reviewService.createReview(request, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(review);
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/users/{userId}/reviews")
     public ResponseEntity<List<Review>> getReviewsForUser(@PathVariable UUID userId) {
         List<Review> reviews = reviewService.getReviewsForUser(userId);
         return ResponseEntity.ok(reviews);
