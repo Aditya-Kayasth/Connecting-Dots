@@ -35,7 +35,10 @@ public class AuthService {
             throw new RuntimeException("Email already in use!");
         }
 
-        Role role = request.getRole() != null ? request.getRole() : Role.CONTRIBUTOR;
+        Role role = request.getRole();
+        if (role == Role.ADMIN || role == null) {
+            role = Role.CONTRIBUTOR; // Force to Contributor to prevent public privilege escalation
+        }
 
         var user = User.builder()
                 .email(request.getEmail())
@@ -52,12 +55,25 @@ public class AuthService {
             String firstName = parts[0];
             String lastName = parts.length > 1 ? parts[1] : "User";
 
+            String lang = (request.getPreferredLanguage() != null && !request.getPreferredLanguage().isBlank())
+                    ? request.getPreferredLanguage() : "en";
+            String title = (request.getTitle() != null && !request.getTitle().isBlank())
+                    ? request.getTitle().trim() : "Technical Contributor";
+            String location = (request.getLocation() != null && !request.getLocation().isBlank())
+                    ? request.getLocation().trim() : "Community Member";
+            String skills = (request.getSkillsSummary() != null && !request.getSkillsSummary().isBlank())
+                    ? request.getSkillsSummary().trim() : "Software Development & Civic Tech";
+
             ContributorProfile profile = ContributorProfile.builder()
                     .user(user)
                     .firstName(firstName)
                     .lastName(lastName)
-                    .skillsSummary("Technical Contributor")
-                    .preferredLanguage("en")
+                    .skillsSummary(skills)
+                    .portfolioUrl(request.getPortfolioUrl())
+                    .preferredLanguage(lang)
+                    .title(title)
+                    .location(location)
+                    .contactNumber(request.getContactNumber())
                     .completedProjects(0)
                     .build();
 
@@ -67,12 +83,18 @@ public class AuthService {
                     ? request.getOrganizationName().trim() : "NGO Organization";
             String domain = request.getPrimaryDomain() != null && !request.getPrimaryDomain().isBlank()
                     ? request.getPrimaryDomain().trim() : "General Social Impact";
+            String lang = (request.getPreferredLanguage() != null && !request.getPreferredLanguage().isBlank())
+                    ? request.getPreferredLanguage() : "en";
+            String location = (request.getLocation() != null && !request.getLocation().isBlank())
+                    ? request.getLocation().trim() : "Global Community";
 
             NgoProfile profile = NgoProfile.builder()
                     .user(user)
                     .organizationName(orgName)
                     .domain(domain)
-                    .preferredLanguage("en")
+                    .contactNumber(request.getContactNumber())
+                    .location(location)
+                    .preferredLanguage(lang)
                     .isVerified(false)
                     .build();
 
@@ -81,7 +103,11 @@ public class AuthService {
 
         var jwtToken = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
 
-        return AuthResponse.builder().token(jwtToken).build();
+        return AuthResponse.builder()
+                .token(jwtToken)
+                .role(user.getRole().name())
+                .userId(user.getId())
+                .build();
     }
 
     public AuthResponse login(AuthRequest request) {
@@ -94,6 +120,10 @@ public class AuthService {
 
         var jwtToken = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
 
-        return AuthResponse.builder().token(jwtToken).build();
+        return AuthResponse.builder()
+                .token(jwtToken)
+                .role(user.getRole().name())
+                .userId(user.getId())
+                .build();
     }
 }
