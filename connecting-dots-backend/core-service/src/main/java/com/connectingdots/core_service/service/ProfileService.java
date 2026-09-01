@@ -1,7 +1,9 @@
 package com.connectingdots.core_service.service;
 
 import com.connectingdots.core_service.dto.ContributorProfileRequest;
+import com.connectingdots.core_service.dto.ContributorProfileUpdateRequest;
 import com.connectingdots.core_service.dto.NgoProfileRequest;
+import com.connectingdots.core_service.dto.NgoProfileUpdateRequest;
 import com.connectingdots.core_service.entity.ContributorProfile;
 import com.connectingdots.core_service.entity.NgoProfile;
 import com.connectingdots.core_service.entity.User;
@@ -38,6 +40,7 @@ public class ProfileService {
         }
 
         String lang = (request.preferredLanguage() != null && !request.preferredLanguage().isBlank()) ? request.preferredLanguage() : "en";
+        String loc = (request.location() != null && !request.location().isBlank()) ? request.location() : "Global Community";
 
         NgoProfile profile = NgoProfile.builder()
                 .user(user)
@@ -45,6 +48,7 @@ public class ProfileService {
                 .domain(request.domain())
                 .contactNumber(request.contactNumber())
                 .preferredLanguage(lang)
+                .location(loc)
                 .build();
 
         return ngoProfileRepository.save(profile);
@@ -59,6 +63,8 @@ public class ProfileService {
         }
 
         String lang = (request.preferredLanguage() != null && !request.preferredLanguage().isBlank()) ? request.preferredLanguage() : "en";
+        String title = (request.title() != null && !request.title().isBlank()) ? request.title() : "Technical Contributor";
+        String location = (request.location() != null && !request.location().isBlank()) ? request.location() : "Community Member";
 
         ContributorProfile profile = ContributorProfile.builder()
                 .user(user)
@@ -67,6 +73,9 @@ public class ProfileService {
                 .skillsSummary(request.skillsSummary())
                 .portfolioUrl(request.portfolioUrl())
                 .preferredLanguage(lang)
+                .title(title)
+                .location(location)
+                .contactNumber(request.contactNumber())
                 .build();
 
         return contributorProfileRepository.save(profile);
@@ -88,5 +97,74 @@ public class ProfileService {
     public ContributorProfile getContributorProfileById(java.util.UUID id) {
         return contributorProfileRepository.findById(id)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Contributor profile not found"));
+    }
+
+    public NgoProfile getAuthenticatedNgoProfile() {
+        User user = getAuthenticatedUser();
+        return ngoProfileRepository.findByUser(user)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "NGO profile not found for authenticated user"));
+    }
+
+    public ContributorProfile getAuthenticatedContributorProfile() {
+        User user = getAuthenticatedUser();
+        return contributorProfileRepository.findByUser(user)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Contributor profile not found for authenticated user"));
+    }
+
+    @Transactional
+    public NgoProfile updateNgoProfile(java.util.UUID id, NgoProfileUpdateRequest request) {
+        NgoProfile profile = getNgoProfileById(id);
+        
+        User user = getAuthenticatedUser();
+        boolean isAdmin = user.getRole() == User.Role.ADMIN;
+        if (!isAdmin && (profile.getUser() == null || !profile.getUser().getId().equals(user.getId()))) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized: You do not own this profile.");
+        }
+
+        profile.setOrganizationName(request.organizationName());
+        profile.setDomain(request.domain());
+        profile.setContactNumber(request.contactNumber());
+        if (request.preferredLanguage() != null) {
+            profile.setPreferredLanguage(request.preferredLanguage());
+        }
+        if (request.location() != null) {
+            profile.setLocation(request.location());
+        }
+        return ngoProfileRepository.save(profile);
+    }
+
+    @Transactional
+    public ContributorProfile updateContributorProfile(java.util.UUID id, ContributorProfileUpdateRequest request) {
+        ContributorProfile profile = getContributorProfileById(id);
+
+        User user = getAuthenticatedUser();
+        boolean isAdmin = user.getRole() == User.Role.ADMIN;
+        if (!isAdmin && (profile.getUser() == null || !profile.getUser().getId().equals(user.getId()))) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Unauthorized: You do not own this profile.");
+        }
+
+        profile.setFirstName(request.firstName());
+        profile.setLastName(request.lastName());
+        profile.setSkillsSummary(request.skillsSummary());
+        profile.setPortfolioUrl(request.portfolioUrl());
+        if (request.preferredLanguage() != null) {
+            profile.setPreferredLanguage(request.preferredLanguage());
+        }
+        if (request.title() != null) {
+            profile.setTitle(request.title());
+        }
+        if (request.location() != null) {
+            profile.setLocation(request.location());
+        }
+        if (request.contactNumber() != null) {
+            profile.setContactNumber(request.contactNumber());
+        }
+        return contributorProfileRepository.save(profile);
+    }
+
+    @Transactional
+    public void deleteAuthenticatedUserAndProfile() {
+        User user = getAuthenticatedUser();
+        userRepository.delete(user);
     }
 }
