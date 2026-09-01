@@ -16,7 +16,7 @@ public class ProblemStatementSpecs {
 
     public static Specification<ProblemStatement> hasStatus(String status) {
         return (root, query, criteriaBuilder) -> {
-            if (status == null || status.trim().isEmpty()) {
+            if (status == null || status.trim().isEmpty() || "ALL".equalsIgnoreCase(status.trim())) {
                 return criteriaBuilder.conjunction();
             }
             try {

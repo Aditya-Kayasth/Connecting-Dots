@@ -12,4 +12,5 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     List<Application> findByContributorProfileId(UUID contributorProfileId);
     List<Application> findByProblemId(UUID problemId);
     boolean existsByProblemIdAndContributorProfileId(UUID problemId, UUID contributorProfileId);
+    void deleteByProblemId(UUID problemId);
 }
