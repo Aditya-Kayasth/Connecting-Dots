@@ -54,9 +54,19 @@ public class MessageService {
     }
 
     public List<Message> getMessagesForApplication(UUID applicationId) {
-        if (!applicationRepository.existsById(applicationId)) {
-            throw new RuntimeException("Application not found");
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+
+        UUID callerUserId = getAuthenticatedUserId();
+        
+        // Also allow ADMIN users to view messages
+        com.connectingdots.core_service.entity.User callerUser = userRepository.findById(callerUserId).orElse(null);
+        boolean isAdmin = callerUser != null && callerUser.getRole() == com.connectingdots.core_service.entity.User.Role.ADMIN;
+
+        if (!isAdmin && !isContributorSender(application, callerUserId) && !isNgoSender(application, callerUserId)) {
+            throw new SecurityException("You are not authorized to view messages for this application");
         }
+
         return messageRepository.findByApplicationIdOrderByCreatedAtAsc(applicationId);
     }
 
