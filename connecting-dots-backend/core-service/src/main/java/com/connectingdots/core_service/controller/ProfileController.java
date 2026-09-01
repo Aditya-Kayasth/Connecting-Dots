@@ -43,6 +43,16 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getAllContributorProfiles());
     }
 
+    @GetMapping("/ngo/me")
+    public ResponseEntity<NgoProfile> getMyNgoProfile() {
+        return ResponseEntity.ok(profileService.getAuthenticatedNgoProfile());
+    }
+
+    @GetMapping("/contributor/me")
+    public ResponseEntity<ContributorProfile> getMyContributorProfile() {
+        return ResponseEntity.ok(profileService.getAuthenticatedContributorProfile());
+    }
+
     @GetMapping("/ngo/{id}")
     public ResponseEntity<NgoProfile> getNgoProfileById(@PathVariable UUID id) {
         return ResponseEntity.ok(profileService.getNgoProfileById(id));
@@ -51,5 +61,23 @@ public class ProfileController {
     @GetMapping("/contributor/{id}")
     public ResponseEntity<ContributorProfile> getContributorProfileById(@PathVariable UUID id) {
         return ResponseEntity.ok(profileService.getContributorProfileById(id));
+    }    @PutMapping("/ngo/{id}")
+    public ResponseEntity<NgoProfile> updateNgoProfile(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.connectingdots.core_service.dto.NgoProfileUpdateRequest request) {
+        return ResponseEntity.ok(profileService.updateNgoProfile(id, request));
     }
-}
+
+    @PutMapping("/contributor/{id}")
+    public ResponseEntity<ContributorProfile> updateContributorProfile(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.connectingdots.core_service.dto.ContributorProfileUpdateRequest request) {
+        return ResponseEntity.ok(profileService.updateContributorProfile(id, request));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyProfileAndAccount() {
+        profileService.deleteAuthenticatedUserAndProfile();
+        return ResponseEntity.noContent().build();
+    }
+}
