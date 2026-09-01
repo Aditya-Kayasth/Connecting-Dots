@@ -1,8 +1,11 @@
 package com.connectingdots.core_service.service;
 
+import com.connectingdots.core_service.dto.ApplicationDetailResponse;
 import com.connectingdots.core_service.dto.ApplicationRequest;
+import com.connectingdots.core_service.dto.ApplicationResponse;
 import com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest;
 import com.connectingdots.core_service.entity.Application;
+import com.connectingdots.core_service.entity.ContributorProfile;
 import com.connectingdots.core_service.entity.NgoProfile;
 import com.connectingdots.core_service.entity.ProblemStatement;
 import com.connectingdots.core_service.entity.User;
@@ -29,17 +32,26 @@ public class ApplicationService {
     private final UserRepository userRepository;
 
     public Application applyToProblem(ApplicationRequest request) {
-        // 1. Verify problem statement exists
-        ProblemStatement problem = problemStatementRepository.findById(request.problemId())
-                .orElseThrow(() -> new RuntimeException("Problem statement not found"));
+        // 1. Verify contributor profile exists and caller owns it
+        ContributorProfile contributor = contributorProfileRepository.findById(request.contributorProfileId())
+                .orElseThrow(() -> new IllegalArgumentException("Contributor profile not found"));
 
-        // 2. Ensure problem statement status allows applications
+        UUID callerUserId = getAuthenticatedUserId();
+        if (contributor.getUser() == null || !contributor.getUser().getId().equals(callerUserId)) {
+            throw new SecurityException("You are not authorized to submit applications for this contributor profile");
+        }
+
+        // 2. Verify problem statement exists
+        ProblemStatement problem = problemStatementRepository.findById(request.problemId())
+                .orElseThrow(() -> new IllegalArgumentException("Problem statement not found"));
+
+        // 3. Ensure problem statement status allows applications
         String status = problem.getStatus().name();
         if (!"OPEN".equalsIgnoreCase(status) && !"PROCESSED".equalsIgnoreCase(status)) {
             throw new IllegalStateException("Problem statement is not open for applications");
         }
 
-        // 3. Check for duplicate application
+        // 4. Check for duplicate application
         boolean alreadyApplied = applicationRepository.existsByProblemIdAndContributorProfileId(
                 request.problemId(), request.contributorProfileId()
         );
@@ -48,7 +60,7 @@ public class ApplicationService {
             throw new IllegalStateException("You have already applied to this problem statement");
         }
 
-        // 4. Save and return the new application
+        // 5. Save and return the new application
         Application application = Application.builder()
                 .problemId(request.problemId())
                 .contributorProfileId(request.contributorProfileId())
@@ -58,12 +70,96 @@ public class ApplicationService {
         return applicationRepository.save(application);
     }
 
-    public List<Application> getApplicationsByContributor(UUID contributorProfileId) {
-        return applicationRepository.findByContributorProfileId(contributorProfileId);
+    private UUID getAuthenticatedUserId() {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            throw new SecurityException("User is not authenticated");
+        }
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .map(user -> user.getId())
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
     }
 
-    public List<Application> getApplicationsForProblem(UUID problemId) {
-        return applicationRepository.findByProblemId(problemId);
+    public ApplicationDetailResponse getApplicationDetails(UUID applicationId) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+
+        ProblemStatement problem = problemStatementRepository.findById(application.getProblemId())
+                .orElseThrow(() -> new IllegalArgumentException("Problem statement not found"));
+
+        ContributorProfile contributor = contributorProfileRepository.findById(application.getContributorProfileId())
+                .orElseThrow(() -> new IllegalArgumentException("Contributor profile not found"));
+
+        String ngoName = (problem.getNgoProfile() != null) ? problem.getNgoProfile().getOrganizationName() : "Unknown NGO";
+        String applicantName = contributor.getFirstName() + " " + contributor.getLastName();
+        String applicantEmail = (contributor.getUser() != null) ? contributor.getUser().getEmail() : "";
+
+        return new ApplicationDetailResponse(
+                application.getId(),
+                application.getStatus(),
+                problem.getTitle(),
+                problem.getDescription(),
+                ngoName,
+                applicantName,
+                applicantEmail
+        );
+    }
+
+    public List<ApplicationResponse> getApplicationsByContributor(UUID contributorProfileId) {
+        ContributorProfile contributor = contributorProfileRepository.findById(contributorProfileId)
+                .orElseThrow(() -> new IllegalArgumentException("Contributor profile not found"));
+        String applicantName = contributor.getFirstName() + " " + contributor.getLastName();
+        String applicantEmail = (contributor.getUser() != null) ? contributor.getUser().getEmail() : "";
+        String applicantSkills = contributor.getSkillsSummary();
+
+        return applicationRepository.findByContributorProfileId(contributorProfileId).stream()
+                .map(app -> {
+                    ProblemStatement problem = problemStatementRepository.findById(app.getProblemId())
+                            .orElse(null);
+                    String problemTitle = (problem != null) ? problem.getTitle() : "Unknown Problem";
+                    String ngoName = (problem != null && problem.getNgoProfile() != null) 
+                            ? problem.getNgoProfile().getOrganizationName() : "Unknown NGO";
+                    return new ApplicationResponse(
+                            app.getId(),
+                            app.getProblemId(),
+                            app.getContributorProfileId(),
+                            app.getStatus(),
+                            problemTitle,
+                            ngoName,
+                            applicantName,
+                            applicantEmail,
+                            applicantSkills
+                    );
+                })
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<ApplicationResponse> getApplicationsForProblem(UUID problemId) {
+        ProblemStatement problem = problemStatementRepository.findById(problemId)
+                .orElseThrow(() -> new IllegalArgumentException("Problem statement not found"));
+        String problemTitle = problem.getTitle();
+        String ngoName = (problem.getNgoProfile() != null) ? problem.getNgoProfile().getOrganizationName() : "Unknown NGO";
+
+        return applicationRepository.findByProblemId(problemId).stream()
+                .map(app -> {
+                    ContributorProfile contributor = contributorProfileRepository.findById(app.getContributorProfileId())
+                            .orElse(null);
+                    String applicantName = (contributor != null) ? contributor.getFirstName() + " " + contributor.getLastName() : "Unknown Contributor";
+                    String applicantEmail = (contributor != null && contributor.getUser() != null) ? contributor.getUser().getEmail() : "";
+                    String applicantSkills = (contributor != null) ? contributor.getSkillsSummary() : "";
+                    return new ApplicationResponse(
+                            app.getId(),
+                            app.getProblemId(),
+                            app.getContributorProfileId(),
+                            app.getStatus(),
+                            problemTitle,
+                            ngoName,
+                            applicantName,
+                            applicantEmail,
+                            applicantSkills
+                    );
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 
     public Application updateApplicationStatus(UUID applicationId, ApplicationStatusUpdateRequest request, UUID requestingNgoProfileId) {
@@ -88,7 +184,23 @@ public class ApplicationService {
 
         // 4. Update status and save
         application.setStatus(request.status());
-        return applicationRepository.save(application);
+        Application savedApplication = applicationRepository.save(application);
+
+        // 5. If application is accepted, update problem status to IN_PROGRESS and auto-reject others
+        if ("ACCEPTED".equalsIgnoreCase(request.status())) {
+            problem.setStatus(ProblemStatement.Status.IN_PROGRESS);
+            problemStatementRepository.save(problem);
+
+            List<Application> allAppsForProblem = applicationRepository.findByProblemId(problem.getId());
+            for (Application app : allAppsForProblem) {
+                if (!app.getId().equals(applicationId) && "PENDING".equalsIgnoreCase(app.getStatus())) {
+                    app.setStatus("REJECTED");
+                    applicationRepository.save(app);
+                }
+            }
+        }
+
+        return savedApplication;
     }
 
     public Application updateApplicationStatus(UUID applicationId, ApplicationStatusUpdateRequest request) {
@@ -118,6 +230,10 @@ public class ApplicationService {
         // 4. Mark application as COMPLETED
         application.setStatus("COMPLETED");
         Application savedApplication = applicationRepository.save(application);
+
+        // Update problem statement status to CLOSED
+        problem.setStatus(ProblemStatement.Status.CLOSED);
+        problemStatementRepository.save(problem);
 
         // 5. Event-Driven Stat Recomputation: Increment contributor's completed projects count
         contributorProfileRepository.findById(application.getContributorProfileId()).ifPresent(profile -> {
