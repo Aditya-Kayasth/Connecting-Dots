@@ -36,23 +36,22 @@ if (-not $tunnelUrl) {
 
 Write-Host "-> Success! New Tunnel URL: $tunnelUrl" -ForegroundColor Green
 
-# 3. Update .env inside core-service folder
-Write-Host "[3/5] Updating AI_WEBHOOK_URL in core-service\.env..." -ForegroundColor Yellow
-$envFile = ".\core-service\.env"
+# 3. Update AI_WEBHOOK_URL in .env files
+Write-Host "[3/5] Updating AI_WEBHOOK_URL in .env file..." -ForegroundColor Yellow
 $targetWebhook = "$tunnelUrl/api/v1/ai/webhook"
+$envFiles = @(".\.env", ".\core-service\.env")
 
-if (Test-Path $envFile) {
-    $envContent = Get-Content $envFile -Raw
-    if ($envContent -match 'AI_WEBHOOK_URL=.*') {
-        $envContent = $envContent -replace 'AI_WEBHOOK_URL=.*', "AI_WEBHOOK_URL=$targetWebhook"
-    } else {
-        $envContent += "`nAI_WEBHOOK_URL=$targetWebhook"
+foreach ($envFile in $envFiles) {
+    if (Test-Path $envFile) {
+        $envContent = Get-Content $envFile -Raw
+        if ($envContent -match 'AI_WEBHOOK_URL=.*') {
+            $envContent = $envContent -replace 'AI_WEBHOOK_URL=.*', "AI_WEBHOOK_URL=$targetWebhook"
+        } else {
+            $envContent += "`nAI_WEBHOOK_URL=$targetWebhook"
+        }
+        Set-Content -Path $envFile -Value $envContent
+        Write-Host "-> Updated $envFile successfully with $targetWebhook" -ForegroundColor Green
     }
-    Set-Content -Path $envFile -Value $envContent
-    Write-Host "-> Updated core-service\.env successfully!" -ForegroundColor Green
-} else {
-    Write-Host "ERROR: .env file not found at $envFile!" -ForegroundColor Red
-    exit
 }
 
 # 4. Automatically boot up all microservices in separate windows
