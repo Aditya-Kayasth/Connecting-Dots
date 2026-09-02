@@ -24,4 +24,9 @@ public class AiController {
     public com.connectingdots.ai_service.dto.TranslationResponse translateProblemContent(@RequestBody com.connectingdots.ai_service.dto.TranslationRequest request) {
         return aiProblemService.translateProblemContent(request);
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/ping")
+    public String ping() {
+        return "AI Service is online!";
+    }
 }
