@@ -24,6 +24,10 @@ services:
     envVars:
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
         value: https://eureka-server-06pj.onrender.com/eureka/
+      - key: CORE_SERVICE_URL
+        value: https://core-service-9mpw.onrender.com
+      - key: AI_SERVICE_URL
+        value: https://ai-service-6r96.onrender.com
       - key: REDIS_URL
         sync: false
       - key: REDIS_HOST
@@ -67,6 +71,8 @@ services:
         sync: false
       - key: AI_WEBHOOK_URL
         sync: false
+      - key: AI_SERVICE_URL
+        value: https://ai-service-6r96.onrender.com
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -88,6 +94,8 @@ services:
     envVars:
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
         value: https://eureka-server-06pj.onrender.com/eureka/
+      - key: CORE_SERVICE_URL
+        value: https://core-service-9mpw.onrender.com
       - key: GEMINI_API_KEY
         sync: false
       - key: SPRING_AI_GOOGLE_GENAI_API_KEY
