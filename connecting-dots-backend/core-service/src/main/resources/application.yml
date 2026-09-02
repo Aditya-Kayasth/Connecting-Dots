@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: ${PORT:8081}
 
 spring:
   application:
@@ -33,6 +33,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    validate-on-migrate: false   # Allows fixing V1 schema without breaking existing Neon DB history
 
 jwt:
   secret: ${JWT_SECRET:super-secret-jwt-key-for-connecting-dots-2026}
@@ -66,3 +67,7 @@ qstash:
   ai-webhook-url: ${AI_WEBHOOK_URL:}
   current-signing-key: ${QSTASH_CURRENT_SIGNING_KEY:}
   next-signing-key: ${QSTASH_NEXT_SIGNING_KEY:}
+
+ai:
+  service:
+    url: ${AI_SERVICE_URL:http://localhost:8082}
