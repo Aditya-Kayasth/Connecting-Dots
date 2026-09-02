@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -57,8 +58,11 @@ class AiServiceWireMockTest {
     }
 
     @BeforeEach
-    void resetWireMock() {
+    void setUp() {
         wireMockServer.resetAll();
+        // @InjectMocks creates the service without Spring context, so @Value fields are null.
+        // ReflectionTestUtils injects the WireMock server URL directly into the aiServiceUrl field.
+        ReflectionTestUtils.setField(problemStatementService, "aiServiceUrl", "http://localhost:8082");
     }
 
     @Test

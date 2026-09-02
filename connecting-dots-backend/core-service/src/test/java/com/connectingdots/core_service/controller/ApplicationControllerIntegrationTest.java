@@ -114,7 +114,7 @@ class ApplicationControllerIntegrationTest {
     }
 
     @Test
-    void applyToProblem_DuplicateFails() {
+    void applyToProblem_DuplicateFails() throws Exception {
         Application application = Application.builder()
                 .problemId(openProblemStatement.getId())
                 .contributorProfileId(contributorProfile.getId())
@@ -124,26 +124,22 @@ class ApplicationControllerIntegrationTest {
 
         ApplicationRequest request = new ApplicationRequest(openProblemStatement.getId(), contributorProfile.getId());
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-            jakarta.servlet.ServletException.class, // NestedServletException inherits from ServletException
-            () -> mockMvc.perform(post("/api/v1/core/applications")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + contributorToken)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-        );
+        mockMvc.perform(post("/api/v1/core/applications")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + contributorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void applyToProblem_ClosedStatusFails() {
+    void applyToProblem_ClosedStatusFails() throws Exception {
         ApplicationRequest request = new ApplicationRequest(closedProblemStatement.getId(), contributorProfile.getId());
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-            jakarta.servlet.ServletException.class,
-            () -> mockMvc.perform(post("/api/v1/core/applications")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + contributorToken)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-        );
+        mockMvc.perform(post("/api/v1/core/applications")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + contributorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -169,7 +165,7 @@ class ApplicationControllerIntegrationTest {
     }
 
     @Test
-    void updateApplicationStatus_OtherNgo_Fails() {
+    void updateApplicationStatus_OtherNgo_Fails() throws Exception {
         Application application = Application.builder()
                 .problemId(openProblemStatement.getId())
                 .contributorProfileId(contributorProfile.getId())
@@ -180,12 +176,10 @@ class ApplicationControllerIntegrationTest {
         com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest statusUpdateRequest =
                 new com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest("ACCEPTED");
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-            jakarta.servlet.ServletException.class,
-            () -> mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/core/applications/" + savedApp.getId() + "/status")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherNgoToken)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(statusUpdateRequest)))
-        );
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/core/applications/" + savedApp.getId() + "/status")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherNgoToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isForbidden());
     }
 }

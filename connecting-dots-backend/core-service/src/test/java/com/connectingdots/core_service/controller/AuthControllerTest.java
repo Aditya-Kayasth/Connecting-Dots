@@ -34,7 +34,11 @@ public class AuthControllerTest {
 
     @Test
     void shouldRegisterUserAndReturnToken() throws Exception {
-        RegisterRequest request = new RegisterRequest("test@example.com", "password", User.Role.NGO);
+        RegisterRequest request = RegisterRequest.builder()
+                .email("test@example.com")
+                .password("password")
+                .role(User.Role.NGO)
+                .build();
         AuthResponse response = new AuthResponse("mock-jwt-token");
 
         when(authService.register(any(RegisterRequest.class))).thenReturn(response);
