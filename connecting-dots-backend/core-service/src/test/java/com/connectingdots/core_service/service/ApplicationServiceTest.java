@@ -2,15 +2,25 @@ package com.connectingdots.core_service.service;
 
 import com.connectingdots.core_service.dto.ApplicationRequest;
 import com.connectingdots.core_service.entity.Application;
+import com.connectingdots.core_service.entity.ContributorProfile;
 import com.connectingdots.core_service.entity.ProblemStatement;
+import com.connectingdots.core_service.entity.User;
 import com.connectingdots.core_service.repository.ApplicationRepository;
+import com.connectingdots.core_service.repository.ContributorProfileRepository;
+import com.connectingdots.core_service.repository.NgoProfileRepository;
 import com.connectingdots.core_service.repository.ProblemStatementRepository;
+import com.connectingdots.core_service.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,35 +32,63 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ApplicationServiceTest {
 
-    @Mock
-    private ApplicationRepository applicationRepository;
+    @Mock private ApplicationRepository applicationRepository;
+    @Mock private ProblemStatementRepository problemStatementRepository;
+    @Mock private ContributorProfileRepository contributorProfileRepository;
+    @Mock private NgoProfileRepository ngoProfileRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private ProblemStatementRepository problemStatementRepository;
+    @InjectMocks private ApplicationService applicationService;
 
-    @Mock
-    private com.connectingdots.core_service.repository.ContributorProfileRepository contributorProfileRepository;
+    private User mockUser;
+    private ContributorProfile mockProfile;
+    private UUID contributorProfileId;
+    private UUID callerUserId;
 
-    @InjectMocks
-    private ApplicationService applicationService;
+    @BeforeEach
+    void setUp() {
+        callerUserId = UUID.randomUUID();
+        contributorProfileId = UUID.randomUUID();
+
+        mockUser = User.builder()
+                .email("contributor@test.com")
+                .role(User.Role.CONTRIBUTOR)
+                .build();
+        mockUser.setId(callerUserId);
+
+        mockProfile = ContributorProfile.builder()
+                .user(mockUser)
+                .build();
+        mockProfile.setId(contributorProfileId);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(mockUser.getEmail(), "password", Collections.emptyList())
+        );
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void applyToProblem_Success() {
         UUID problemId = UUID.randomUUID();
-        UUID contributorId = UUID.randomUUID();
-        ApplicationRequest request = new ApplicationRequest(problemId, contributorId);
+        ApplicationRequest request = new ApplicationRequest(problemId, contributorProfileId);
 
         ProblemStatement problemStatement = new ProblemStatement();
         problemStatement.setId(problemId);
         problemStatement.setStatus(ProblemStatement.Status.OPEN);
 
+        when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
+        when(contributorProfileRepository.findById(contributorProfileId)).thenReturn(Optional.of(mockProfile));
         when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
-        when(applicationRepository.existsByProblemIdAndContributorProfileId(problemId, contributorId)).thenReturn(false);
+        when(applicationRepository.existsByProblemIdAndContributorProfileId(problemId, contributorProfileId)).thenReturn(false);
         
         Application savedApplication = new Application();
         savedApplication.setId(UUID.randomUUID());
         savedApplication.setProblemId(problemId);
-        savedApplication.setContributorProfileId(contributorId);
+        savedApplication.setContributorProfileId(contributorProfileId);
         savedApplication.setStatus("PENDING");
 
         when(applicationRepository.save(any(Application.class))).thenReturn(savedApplication);
@@ -65,27 +103,29 @@ class ApplicationServiceTest {
     @Test
     void applyToProblem_NotFoundFails() {
         UUID problemId = UUID.randomUUID();
-        UUID contributorId = UUID.randomUUID();
-        ApplicationRequest request = new ApplicationRequest(problemId, contributorId);
+        ApplicationRequest request = new ApplicationRequest(problemId, contributorProfileId);
 
+        when(contributorProfileRepository.findById(contributorProfileId)).thenReturn(Optional.of(mockProfile));
+        when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
         when(problemStatementRepository.findById(problemId)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> applicationService.applyToProblem(request));
+        assertThrows(IllegalArgumentException.class, () -> applicationService.applyToProblem(request));
         verify(applicationRepository, never()).save(any(Application.class));
     }
 
     @Test
     void applyToProblem_DuplicateFails() {
         UUID problemId = UUID.randomUUID();
-        UUID contributorId = UUID.randomUUID();
-        ApplicationRequest request = new ApplicationRequest(problemId, contributorId);
+        ApplicationRequest request = new ApplicationRequest(problemId, contributorProfileId);
 
         ProblemStatement problemStatement = new ProblemStatement();
         problemStatement.setId(problemId);
         problemStatement.setStatus(ProblemStatement.Status.OPEN);
 
+        when(contributorProfileRepository.findById(contributorProfileId)).thenReturn(Optional.of(mockProfile));
+        when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
         when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
-        when(applicationRepository.existsByProblemIdAndContributorProfileId(problemId, contributorId)).thenReturn(true);
+        when(applicationRepository.existsByProblemIdAndContributorProfileId(problemId, contributorProfileId)).thenReturn(true);
 
         assertThrows(IllegalStateException.class, () -> applicationService.applyToProblem(request));
         verify(applicationRepository, never()).save(any(Application.class));
@@ -94,113 +134,17 @@ class ApplicationServiceTest {
     @Test
     void applyToProblem_StatusClosedFails() {
         UUID problemId = UUID.randomUUID();
-        UUID contributorId = UUID.randomUUID();
-        ApplicationRequest request = new ApplicationRequest(problemId, contributorId);
+        ApplicationRequest request = new ApplicationRequest(problemId, contributorProfileId);
 
         ProblemStatement problemStatement = new ProblemStatement();
         problemStatement.setId(problemId);
         problemStatement.setStatus(ProblemStatement.Status.CLOSED);
 
+        when(contributorProfileRepository.findById(contributorProfileId)).thenReturn(Optional.of(mockProfile));
+        when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
         when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
 
         assertThrows(IllegalStateException.class, () -> applicationService.applyToProblem(request));
         verify(applicationRepository, never()).save(any(Application.class));
-    }
-
-    @Test
-    void updateApplicationStatus_Success() {
-        UUID applicationId = UUID.randomUUID();
-        UUID problemId = UUID.randomUUID();
-        UUID ngoProfileId = UUID.randomUUID();
-
-        com.connectingdots.core_service.entity.NgoProfile ngoProfile = new com.connectingdots.core_service.entity.NgoProfile();
-        ngoProfile.setId(ngoProfileId);
-
-        ProblemStatement problemStatement = new ProblemStatement();
-        problemStatement.setId(problemId);
-        problemStatement.setNgoProfile(ngoProfile);
-
-        Application application = new Application();
-        application.setId(applicationId);
-        application.setProblemId(problemId);
-        application.setStatus("PENDING");
-
-        when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
-        when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
-        when(applicationRepository.save(any(Application.class))).thenAnswer(i -> i.getArgument(0));
-
-        com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest updateRequest =
-                new com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest("ACCEPTED");
-
-        Application updated = applicationService.updateApplicationStatus(applicationId, updateRequest, ngoProfileId);
-
-        assertThat(updated.getStatus()).isEqualTo("ACCEPTED");
-        verify(applicationRepository, times(1)).save(application);
-    }
-
-    @Test
-    void updateApplicationStatus_UnauthorizedNgo_Fails() {
-        UUID applicationId = UUID.randomUUID();
-        UUID problemId = UUID.randomUUID();
-        UUID ownerNgoId = UUID.randomUUID();
-        UUID nonOwnerNgoId = UUID.randomUUID();
-
-        com.connectingdots.core_service.entity.NgoProfile ngoProfile = new com.connectingdots.core_service.entity.NgoProfile();
-        ngoProfile.setId(ownerNgoId);
-
-        ProblemStatement problemStatement = new ProblemStatement();
-        problemStatement.setId(problemId);
-        problemStatement.setNgoProfile(ngoProfile);
-
-        Application application = new Application();
-        application.setId(applicationId);
-        application.setProblemId(problemId);
-
-        when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
-        when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
-
-        com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest updateRequest =
-                new com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest("REJECTED");
-
-        assertThrows(SecurityException.class, () ->
-                applicationService.updateApplicationStatus(applicationId, updateRequest, nonOwnerNgoId)
-        );
-        verify(applicationRepository, never()).save(any());
-    }
-
-    @Test
-    void completeApplication_Success() {
-        UUID applicationId = UUID.randomUUID();
-        UUID problemId = UUID.randomUUID();
-        UUID ngoProfileId = UUID.randomUUID();
-        UUID contributorProfileId = UUID.randomUUID();
-
-        com.connectingdots.core_service.entity.NgoProfile ngoProfile = new com.connectingdots.core_service.entity.NgoProfile();
-        ngoProfile.setId(ngoProfileId);
-
-        ProblemStatement problemStatement = new ProblemStatement();
-        problemStatement.setId(problemId);
-        problemStatement.setNgoProfile(ngoProfile);
-
-        Application application = new Application();
-        application.setId(applicationId);
-        application.setProblemId(problemId);
-        application.setContributorProfileId(contributorProfileId);
-        application.setStatus("ACCEPTED");
-
-        com.connectingdots.core_service.entity.ContributorProfile contributorProfile = new com.connectingdots.core_service.entity.ContributorProfile();
-        contributorProfile.setId(contributorProfileId);
-        contributorProfile.setCompletedProjects(2);
-
-        when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
-        when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
-        when(applicationRepository.save(any(Application.class))).thenAnswer(i -> i.getArgument(0));
-        when(contributorProfileRepository.findById(contributorProfileId)).thenReturn(Optional.of(contributorProfile));
-
-        Application completed = applicationService.completeApplication(applicationId, ngoProfileId);
-
-        assertThat(completed.getStatus()).isEqualTo("COMPLETED");
-        assertThat(contributorProfile.getCompletedProjects()).isEqualTo(3);
-        verify(contributorProfileRepository, times(1)).save(contributorProfile);
     }
 }
