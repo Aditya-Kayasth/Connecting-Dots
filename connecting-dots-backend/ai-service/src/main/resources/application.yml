@@ -1,5 +1,9 @@
 server:
-  port: 8082
+  port: ${PORT:8082}
+
+core:
+  service:
+    url: ${CORE_SERVICE_URL:http://localhost:8081}
 
 spring:
   application:
