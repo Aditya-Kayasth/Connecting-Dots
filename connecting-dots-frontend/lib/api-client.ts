@@ -12,25 +12,24 @@ export interface ApiResponse<T> {
 
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+  return sessionStorage.getItem('auth_token')
 }
 
 export function setAuthSession(token: string, role?: string, userId?: string, email?: string) {
   if (typeof window === 'undefined') return
-  localStorage.setItem('auth_token', token)
-  if (role) localStorage.setItem('auth_role', role)
-  if (userId) localStorage.setItem('auth_user_id', userId)
-  if (email) localStorage.setItem('auth_email', email)
+  sessionStorage.setItem('auth_token', token)
+  if (role) sessionStorage.setItem('auth_role', role)
+  if (userId) sessionStorage.setItem('auth_user_id', userId)
+  if (email) sessionStorage.setItem('auth_email', email)
   window.dispatchEvent(new Event('storage'))
 }
 
 export function clearAuthSession() {
   if (typeof window === 'undefined') return
-  localStorage.removeItem('auth_token')
-  localStorage.removeItem('auth_role')
-  localStorage.removeItem('auth_user_id')
-  localStorage.removeItem('auth_email')
-  sessionStorage.clear()
+  sessionStorage.removeItem('auth_token')
+  sessionStorage.removeItem('auth_role')
+  sessionStorage.removeItem('auth_user_id')
+  sessionStorage.removeItem('auth_email')
   window.dispatchEvent(new Event('storage'))
 }
 
@@ -40,17 +39,17 @@ export function logout() {
 
 export function getAuthUserId(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('auth_user_id') || null
+  return sessionStorage.getItem('auth_user_id') || null
 }
 
 export function getAuthRole(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('auth_role') || null
+  return sessionStorage.getItem('auth_role') || null
 }
 
 export function getAuthEmail(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('auth_email') || extractEmailFromToken()
+  return sessionStorage.getItem('auth_email') || extractEmailFromToken()
 }
 
 export function getSavedUser(): { email: string; role: string } | null {
@@ -82,9 +81,21 @@ async function apiFetch<T>(
   })
 
   if (!response.ok) {
-    const errorData = await response.text()
+    const errorText = await response.text()
+    let errorMessage = errorText
+    try {
+      const parsed = JSON.parse(errorText)
+      errorMessage = parsed.message || parsed.error || errorText
+    } catch {
+      // fallback to raw text
+    }
+
+    if (response.status === 401 && endpoint.includes('/auth/login')) {
+      errorMessage = errorMessage || 'Invalid email or password.'
+    }
+
     throw new Error(
-      `API Error [${response.status}]: ${errorData || response.statusText}`,
+      errorMessage || `API Error [${response.status}]: ${response.statusText}`,
     )
   }
 
