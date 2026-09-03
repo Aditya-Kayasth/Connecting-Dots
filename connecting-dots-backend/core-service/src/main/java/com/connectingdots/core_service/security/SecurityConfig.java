@@ -72,11 +72,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/contributors/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/ngos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/core/assignments/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/core/users/*/reviews").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/core/problem-statements/*/ai-update").permitAll()
                         .requestMatchers("/api/v1/core/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
