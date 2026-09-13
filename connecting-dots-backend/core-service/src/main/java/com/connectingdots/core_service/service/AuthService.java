@@ -126,4 +126,27 @@ public class AuthService {
                 .userId(user.getId())
                 .build();
     }
-}
+
+    private static final java.util.Set<String> DEMO_EMAILS = java.util.Set.of(
+            "admin@connectingdots.org",
+            "ngo_test@connectingdots.org",
+            "contributor_test@connectingdots.org"
+    );
+
+    @Transactional
+    public void changePassword(String email, com.connectingdots.core_service.dto.ChangePasswordRequest request) {
+        if (email != null && DEMO_EMAILS.contains(email.trim().toLowerCase())) {
+            throw new RuntimeException("Password changes are disabled for shared demo accounts to prevent locking out future visitors.");
+        }
+
+        User user = repository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found in database."));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Current password is incorrect.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        repository.save(user);
+    }
+}
