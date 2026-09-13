@@ -1,21 +1,25 @@
 package com.connectingdots.core_service.config;
 
 import com.connectingdots.core_service.dto.IngestionMessage;
+import com.connectingdots.core_service.entity.ContributorProfile;
 import com.connectingdots.core_service.entity.NgoProfile;
 import com.connectingdots.core_service.entity.ProblemStatement;
 import com.connectingdots.core_service.entity.User;
+import com.connectingdots.core_service.repository.ContributorProfileRepository;
 import com.connectingdots.core_service.repository.NgoProfileRepository;
 import com.connectingdots.core_service.repository.ProblemStatementRepository;
 import com.connectingdots.core_service.repository.UserRepository;
 import com.connectingdots.core_service.service.QStashService;
-import org.springframework.core.env.Environment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.env.Environment;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 // ==============================================================================
-// Startup Seeder: Always verifies the default Admin user is registered.
-// Gate dev mock data under the 'seed-data' profile check.
+// Startup Seeder: Guarantees Admin, Test NGO, and Test Contributor are always
+// seeded and available even if the database is truncated.
 // ==============================================================================
 @Component
 @RequiredArgsConstructor
@@ -24,16 +28,17 @@ public class TestDatabaseSeeder implements CommandLineRunner {
     private final ProblemStatementRepository problemStatementRepository;
     private final UserRepository userRepository;
     private final NgoProfileRepository ngoProfileRepository;
+    private final ContributorProfileRepository contributorProfileRepository;
     private final QStashService qStashService;
     private final Environment environment;
 
     @Override
     @org.springframework.transaction.annotation.Transactional
     public void run(String... args) throws Exception {
-        // 0. Ensure Admin User exists safely
+        PasswordEncoder encoder = new BCryptPasswordEncoder();
+
+        // 1. Seed / Restore Default Admin User
         try {
-            org.springframework.security.crypto.password.PasswordEncoder encoder = 
-                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
             User adminUser = userRepository.findByEmail("admin@connectingdots.org").orElse(null);
             if (adminUser == null) {
                 adminUser = User.builder()
@@ -42,17 +47,93 @@ public class TestDatabaseSeeder implements CommandLineRunner {
                         .role(User.Role.ADMIN)
                         .isActive(true)
                         .build();
-                userRepository.save(adminUser);
-                System.out.println("[DATABASE SEEDER] Created Default Admin User: admin@connectingdots.org / Admin@1234");
+                userRepository.saveAndFlush(adminUser);
+                System.out.println("[DATABASE SEEDER] Created Admin User: admin@connectingdots.org / Admin@1234");
             } else {
                 adminUser.setPasswordHash(encoder.encode("Admin@1234"));
                 adminUser.setRole(User.Role.ADMIN);
                 adminUser.setActive(true);
-                userRepository.save(adminUser);
-                System.out.println("[DATABASE SEEDER] Admin user admin@connectingdots.org reset to: Admin@1234");
+                userRepository.saveAndFlush(adminUser);
+                System.out.println("[DATABASE SEEDER] Restored Admin User: admin@connectingdots.org / Admin@1234");
             }
         } catch (Exception e) {
             System.out.println("[DATABASE SEEDER] Admin user seeding note: " + e.getMessage());
+        }
+
+        // 2. Seed / Restore Default Test NGO User & Profile
+        try {
+            User ngoUser = userRepository.findByEmail("ngo_test@connectingdots.org").orElse(null);
+            if (ngoUser == null) {
+                ngoUser = User.builder()
+                        .email("ngo_test@connectingdots.org")
+                        .passwordHash(encoder.encode("password123"))
+                        .role(User.Role.NGO)
+                        .isActive(true)
+                        .build();
+                ngoUser = userRepository.saveAndFlush(ngoUser);
+                System.out.println("[DATABASE SEEDER] Created Test NGO User: ngo_test@connectingdots.org / password123");
+            } else {
+                ngoUser.setPasswordHash(encoder.encode("password123"));
+                ngoUser.setRole(User.Role.NGO);
+                ngoUser.setActive(true);
+                ngoUser = userRepository.saveAndFlush(ngoUser);
+                System.out.println("[DATABASE SEEDER] Restored Test NGO User: ngo_test@connectingdots.org / password123");
+            }
+
+            if (!ngoProfileRepository.findByUser(ngoUser).isPresent()) {
+                NgoProfile ngoProfile = NgoProfile.builder()
+                        .user(ngoUser)
+                        .organizationName("Hope Foundation")
+                        .domain("Education Technology")
+                        .contactNumber("9876543210")
+                        .preferredLanguage("en")
+                        .location("Global Community")
+                        .isVerified(true)
+                        .build();
+                ngoProfileRepository.saveAndFlush(ngoProfile);
+                System.out.println("[DATABASE SEEDER] Created missing NgoProfile for ngo_test@connectingdots.org");
+            }
+        } catch (Exception e) {
+            System.out.println("[DATABASE SEEDER] Test NGO seeding note: " + e.getMessage());
+        }
+
+        // 3. Seed / Restore Default Test Contributor User & Profile
+        try {
+            User contributorUser = userRepository.findByEmail("contributor_test@connectingdots.org").orElse(null);
+            if (contributorUser == null) {
+                contributorUser = User.builder()
+                        .email("contributor_test@connectingdots.org")
+                        .passwordHash(encoder.encode("password123"))
+                        .role(User.Role.CONTRIBUTOR)
+                        .isActive(true)
+                        .build();
+                contributorUser = userRepository.saveAndFlush(contributorUser);
+                System.out.println("[DATABASE SEEDER] Created Test Contributor User: contributor_test@connectingdots.org / password123");
+            } else {
+                contributorUser.setPasswordHash(encoder.encode("password123"));
+                contributorUser.setRole(User.Role.CONTRIBUTOR);
+                contributorUser.setActive(true);
+                contributorUser = userRepository.saveAndFlush(contributorUser);
+                System.out.println("[DATABASE SEEDER] Restored Test Contributor User: contributor_test@connectingdots.org / password123");
+            }
+
+            if (!contributorProfileRepository.findByUser(contributorUser).isPresent()) {
+                ContributorProfile contributorProfile = ContributorProfile.builder()
+                        .user(contributorUser)
+                        .firstName("Alex")
+                        .lastName("Morgan")
+                        .title("Senior Full-Stack Engineer")
+                        .skillsSummary("React, Java, Spring Boot, Python, AI")
+                        .contactNumber("9876543210")
+                        .location("Community Member")
+                        .preferredLanguage("en")
+                        .completedProjects(2)
+                        .build();
+                contributorProfileRepository.saveAndFlush(contributorProfile);
+                System.out.println("[DATABASE SEEDER] Created missing ContributorProfile for contributor_test@connectingdots.org");
+            }
+        } catch (Exception e) {
+            System.out.println("[DATABASE SEEDER] Test Contributor seeding note: " + e.getMessage());
         }
 
         // Startup Audit: Verify and log all problem statements existing in database
@@ -76,7 +157,7 @@ public class TestDatabaseSeeder implements CommandLineRunner {
         if (java.util.Arrays.asList(environment.getActiveProfiles()).contains("seed-data")) {
             ProblemStatement problemStatement = problemStatementRepository.findAll().stream().findFirst().orElseGet(() -> {
     
-                // 1. Ensure User exists to avoid unique constraint violations on email
+                // Ensure User exists to avoid unique constraint violations on email
                 User user = userRepository.findAll().stream().findFirst().orElseGet(() -> {
                     User newUser = User.builder()
                             .email("test_webhook_ngo@example.com")
@@ -87,7 +168,7 @@ public class TestDatabaseSeeder implements CommandLineRunner {
                     return userRepository.save(newUser);
                 });
     
-                // 2. Ensure NgoProfile exists since it's required for ProblemStatement
+                // Ensure NgoProfile exists since it's required for ProblemStatement
                 NgoProfile ngoProfile = ngoProfileRepository.findAll().stream().findFirst().orElseGet(() -> {
                     NgoProfile newNgoProfile = NgoProfile.builder()
                             .user(user)
@@ -98,7 +179,7 @@ public class TestDatabaseSeeder implements CommandLineRunner {
                     return ngoProfileRepository.save(newNgoProfile);
                 });
     
-                // 3. Create the ProblemStatement with the requested dummy data
+                // Create the ProblemStatement with the requested dummy data
                 ProblemStatement newProblemStatement = ProblemStatement.builder()
                         .title("QStash Async Integration Test")
                         .description("Testing the webhook pipeline")
@@ -119,17 +200,16 @@ public class TestDatabaseSeeder implements CommandLineRunner {
                 problemStatement = problemStatementRepository.save(problemStatement);
             }
     
-            // 4. Construct the IngestionMessage
+            // Construct the IngestionMessage
             IngestionMessage message = new IngestionMessage(
                     problemStatement.getId(),
                     problemStatement.getSourceFileUrl(),
                     problemStatement.getSourceType()
             );
     
-            // 5. Dispatch the webhook
+            // Dispatch the webhook
             qStashService.publishToAiService(message);
     
-            // 6. Log the UUID clearly to the console
             System.out.println("=================================================");
             System.out.println("[AUTOMATED TEST] QStash Webhook Fired for UUID: " + problemStatement.getId());
             System.out.println("=================================================");
