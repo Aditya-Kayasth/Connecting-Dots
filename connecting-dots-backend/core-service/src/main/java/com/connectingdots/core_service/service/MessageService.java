@@ -23,8 +23,10 @@ public class MessageService {
     private final ProblemStatementRepository problemStatementRepository;
     private final ContributorProfileRepository contributorProfileRepository;
     private final UserRepository userRepository;
+    private final DemoAccountGuard demoAccountGuard;
 
     public Message sendMessage(UUID applicationId, UUID senderId, String content) {
+        demoAccountGuard.assertNotDemoAccount();
         // 1. Fetch application
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
