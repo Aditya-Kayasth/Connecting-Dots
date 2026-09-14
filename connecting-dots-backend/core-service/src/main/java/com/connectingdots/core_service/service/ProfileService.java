@@ -22,6 +22,7 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final NgoProfileRepository ngoProfileRepository;
     private final ContributorProfileRepository contributorProfileRepository;
+    private final DemoAccountGuard demoAccountGuard;
 
     // A helper method to get the currently logged-in user from the JWT Security Context
     private User getAuthenticatedUser() {
@@ -32,6 +33,7 @@ public class ProfileService {
 
     @Transactional
     public NgoProfile createNgoProfile(NgoProfileRequest request) {
+        demoAccountGuard.assertNotDemoAccount();
         User user = getAuthenticatedUser();
 
         // Security check: Only users with the NGO role can create this profile
@@ -56,6 +58,7 @@ public class ProfileService {
 
     @Transactional
     public ContributorProfile createContributorProfile(ContributorProfileRequest request) {
+        demoAccountGuard.assertNotDemoAccount();
         User user = getAuthenticatedUser();
 
         if (user.getRole() != User.Role.CONTRIBUTOR) {
@@ -113,6 +116,7 @@ public class ProfileService {
 
     @Transactional
     public NgoProfile updateNgoProfile(java.util.UUID id, NgoProfileUpdateRequest request) {
+        demoAccountGuard.assertNotDemoAccount();
         NgoProfile profile = getNgoProfileById(id);
         
         User user = getAuthenticatedUser();
@@ -135,6 +139,7 @@ public class ProfileService {
 
     @Transactional
     public ContributorProfile updateContributorProfile(java.util.UUID id, ContributorProfileUpdateRequest request) {
+        demoAccountGuard.assertNotDemoAccount();
         ContributorProfile profile = getContributorProfileById(id);
 
         User user = getAuthenticatedUser();
@@ -164,6 +169,7 @@ public class ProfileService {
 
     @Transactional
     public void deleteAuthenticatedUserAndProfile() {
+        demoAccountGuard.assertNotDemoAccount();
         User user = getAuthenticatedUser();
         userRepository.delete(user);
     }
