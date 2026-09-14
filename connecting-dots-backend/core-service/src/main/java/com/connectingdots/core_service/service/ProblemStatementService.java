@@ -36,6 +36,7 @@ public class ProblemStatementService {
     private final UserRepository userRepository;
     private final com.connectingdots.core_service.repository.ApplicationRepository applicationRepository;
     private final QStashService qStashService;
+    private final DemoAccountGuard demoAccountGuard;
 
     private final RestClient restClient = RestClient.create();
 
@@ -52,6 +53,7 @@ public class ProblemStatementService {
 
     @Transactional
     public ProblemStatement createProblemStatement(ProblemStatementRequest request) {
+        demoAccountGuard.assertNotDemoAccount();
         User user = getAuthenticatedUser();
         if (user == null) {
             throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "User not authenticated.");
@@ -175,6 +177,7 @@ public class ProblemStatementService {
 
     @Transactional
     public void updateProblemStatementWithAiResults(java.util.UUID id, com.connectingdots.core_service.dto.AiUpdatePayload payload) {
+        demoAccountGuard.assertNotDemoAccount();
         ProblemStatement problemStatement = problemStatementRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Problem statement not found"));
         
@@ -203,6 +206,7 @@ public class ProblemStatementService {
 
     @Transactional
     public void triggerIngestion(UUID id) {
+        demoAccountGuard.assertNotDemoAccount();
         User user = getAuthenticatedUser();
         if (user == null) {
             throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.UNAUTHORIZED, "User not authenticated.");
@@ -238,6 +242,7 @@ public class ProblemStatementService {
 
     @Transactional
     public ProblemStatement updateProblemStatement(UUID id, ProblemStatementRequest request) {
+        demoAccountGuard.assertNotDemoAccount();
         ProblemStatement problem = problemStatementRepository.findById(id)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Problem statement not found"));
@@ -272,6 +277,7 @@ public class ProblemStatementService {
 
     @Transactional
     public void deleteProblemStatement(UUID id) {
+        demoAccountGuard.assertNotDemoAccount();
         ProblemStatement problem = problemStatementRepository.findById(id)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Problem statement not found"));
