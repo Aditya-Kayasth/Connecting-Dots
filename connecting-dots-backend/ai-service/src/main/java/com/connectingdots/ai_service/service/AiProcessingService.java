@@ -90,23 +90,44 @@ public class AiProcessingService {
 
             String prompt = promptBuilder.toString();
 
-            // 5. Call Gemini 3.5 Flash model with multimodal Parts (Text + Image/File)
+            // 5. Call Gemini model with multimodal Parts (Text + Image/File)
             com.google.genai.types.Part textPart = com.google.genai.types.Part.fromText(prompt);
             com.google.genai.types.Part filePart = (fileBytes != null && mimeType != null)
                     ? com.google.genai.types.Part.fromBytes(fileBytes, mimeType)
                     : null;
 
-            GenerateContentResponse response = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            String[] candidateModels = new String[] { "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-1.5-flash" };
+            GenerateContentResponse response = null;
+            Throwable lastError = null;
+
+            for (String modelName : candidateModels) {
                 try {
-                    if (filePart != null) {
-                        return client.models.generateContent("gemini-3.5-flash", com.google.genai.types.Content.fromParts(textPart, filePart), null);
-                    } else {
-                        return client.models.generateContent("gemini-3.5-flash", prompt, null);
+                    System.out.println("Attempting Gemini AI extraction with model: " + modelName);
+                    response = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                        try {
+                            if (filePart != null) {
+                                return client.models.generateContent(modelName, com.google.genai.types.Content.fromParts(textPart, filePart), null);
+                            } else {
+                                return client.models.generateContent(modelName, prompt, null);
+                            }
+                        } catch (Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }).get(90, java.util.concurrent.TimeUnit.SECONDS);
+
+                    if (response != null && response.text() != null && !response.text().isBlank()) {
+                        System.out.println("Gemini extraction SUCCESSFUL with model: " + modelName);
+                        break;
                     }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+                } catch (Throwable err) {
+                    lastError = (err.getCause() != null) ? err.getCause() : err;
+                    System.err.println("Model " + modelName + " attempt failed: " + lastError.getMessage());
                 }
-            }).get(120, java.util.concurrent.TimeUnit.SECONDS);
+            }
+
+            if (response == null || response.text() == null || response.text().isBlank()) {
+                throw new RuntimeException(lastError != null ? lastError.getMessage() : "All Gemini model candidates failed to return content");
+            }
 
             String aiOutputText = response.text();
             System.out.println("Gemini raw response received successfully.");
@@ -136,8 +157,12 @@ public class AiProcessingService {
             // 5. Send results back to core-service via callback
             sendResultsBackToCore(message.problemId().toString(), extractedData);
 
-        } catch (Exception e) {
-            System.err.println("Failed to process real AI ingestion: " + e.getMessage());
+        } catch (Throwable e) {
+            Throwable root = (e.getCause() != null) ? e.getCause() : e;
+            String errorMsg = (root.getMessage() != null && !root.getMessage().isBlank()) ? root.getMessage() : root.toString();
+            System.err.println("Failed to process real AI ingestion: " + errorMsg);
+            root.printStackTrace();
+
             try {
                 // Fetch the existing problem statement to retrieve its original details
                 String problemUrl = coreServiceUrl + "/api/v1/core/problem-statements/" + message.problemId();
@@ -151,12 +176,12 @@ public class AiProcessingService {
                          : "Draft Problem Statement (AI Ingestion Failed)";
                 String desc = (existing != null && existing.description() != null && !existing.description().isBlank()) 
                          ? existing.description().trim() 
-                         : "AI extraction failed due to timeout or configuration error. Please review and enter details manually.";
+                         : "AI extraction failed due to API configuration error. Please review and enter details manually.";
                 String domain = (existing != null && existing.domain() != null && !existing.domain().isBlank()) 
                          ? existing.domain() 
                          : "Others";
 
-                String fallbackDesc = desc + "\n\n(Error details: " + e.getMessage() + ")";
+                String fallbackDesc = desc + "\n\n(Error details: " + errorMsg + ")";
 
                 AiExtractionResult fallbackData = AiExtractionResult.builder()
                         .title(title)
