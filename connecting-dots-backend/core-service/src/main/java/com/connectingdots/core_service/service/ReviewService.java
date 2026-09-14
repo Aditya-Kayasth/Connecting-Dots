@@ -28,9 +28,11 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
     private final ContributorProfileRepository contributorProfileRepository;
+    private final DemoAccountGuard demoAccountGuard;
 
     @Transactional
     public Review createReview(ReviewRequest request, UUID explicitRaterId) {
+        demoAccountGuard.assertNotDemoAccount();
         UUID raterId = explicitRaterId;
         if (raterId == null) {
             raterId = getAuthenticatedUserId();
