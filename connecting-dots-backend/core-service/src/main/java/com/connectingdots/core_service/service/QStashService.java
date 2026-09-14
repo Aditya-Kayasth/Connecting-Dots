@@ -26,8 +26,10 @@ public class QStashService {
     private String aiServiceUrl;
 
     public void publishToAiService(IngestionMessage message) {
-        if (qStashToken == null || qStashToken.isBlank() || aiWebhookUrl == null || aiWebhookUrl.isBlank()) {
-            System.out.println("QStash is not configured. Falling back to direct Local AI Webhook call...");
+        boolean isLocalWebhook = aiWebhookUrl != null && (aiWebhookUrl.contains("localhost") || aiWebhookUrl.contains("127.0.0.1"));
+
+        if (qStashToken == null || qStashToken.isBlank() || isLocalWebhook) {
+            System.out.println("Local environment detected. Dispatching direct webhook to AI service...");
             String localWebhookUrl = aiServiceUrl + "/api/v1/ai/webhook";
             try {
                 restClient.post()
@@ -37,10 +39,11 @@ public class QStashService {
                         .retrieve()
                         .toBodilessEntity();
                 System.out.println("Successfully dispatched direct Local AI Webhook callback!");
+                return;
             } catch (Exception e) {
                 System.err.println("Failed to perform direct Local AI Webhook callback: " + e.getMessage());
             }
-            return;
+            if (qStashToken == null || qStashToken.isBlank()) return;
         }
 
         String destinationEndpoint = qStashApiUrl.endsWith("/") || aiWebhookUrl.startsWith("/") 
