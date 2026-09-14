@@ -30,8 +30,10 @@ public class ApplicationService {
     private final NgoProfileRepository ngoProfileRepository;
     private final ContributorProfileRepository contributorProfileRepository;
     private final UserRepository userRepository;
+    private final DemoAccountGuard demoAccountGuard;
 
     public Application applyToProblem(ApplicationRequest request) {
+        demoAccountGuard.assertNotDemoAccount();
         // 1. Verify contributor profile exists and caller owns it
         ContributorProfile contributor = contributorProfileRepository.findById(request.contributorProfileId())
                 .orElseThrow(() -> new IllegalArgumentException("Contributor profile not found"));
@@ -163,6 +165,7 @@ public class ApplicationService {
     }
 
     public Application updateApplicationStatus(UUID applicationId, ApplicationStatusUpdateRequest request, UUID requestingNgoProfileId) {
+        demoAccountGuard.assertNotDemoAccount();
         // 1. Fetch Application
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
@@ -204,10 +207,12 @@ public class ApplicationService {
     }
 
     public Application updateApplicationStatus(UUID applicationId, ApplicationStatusUpdateRequest request) {
+        demoAccountGuard.assertNotDemoAccount();
         return updateApplicationStatus(applicationId, request, null);
     }
 
     public Application completeApplication(UUID applicationId, UUID requestingNgoProfileId) {
+        demoAccountGuard.assertNotDemoAccount();
         // 1. Fetch Application
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
@@ -246,6 +251,7 @@ public class ApplicationService {
     }
 
     public Application completeApplication(UUID applicationId) {
+        demoAccountGuard.assertNotDemoAccount();
         return completeApplication(applicationId, null);
     }
 
