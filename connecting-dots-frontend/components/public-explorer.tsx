@@ -67,6 +67,16 @@ export default function PublicExplorer() {
     setToken(getAuthToken())
   }, [])
 
+  // Lock background scroll when the detail drawer is open
+  useEffect(() => {
+    if (problemDetail) {
+      document.body.classList.add('drawer-open')
+    } else {
+      document.body.classList.remove('drawer-open')
+    }
+    return () => document.body.classList.remove('drawer-open')
+  }, [problemDetail])
+
   useEffect(() => {
     Promise.all([
       apiRequest<any>('/api/v1/core/problem-statements?status=OPEN'),
@@ -193,7 +203,9 @@ export default function PublicExplorer() {
                   <Badge status={p.status} />
                 </div>
                 <h3>{p.title}</h3>
-                <p>{p.description.substring(0, 140)}...</p>
+                <p className="line-clamp-4" style={{ margin: '12px 0 16px', lineHeight: '1.6' }}>
+                  {p.description}
+                </p>
                 <div className="card-footer">
                   <span className="domain-tag">{p.domain}</span>
                   <span className="text-link">Read details →</span>
@@ -299,30 +311,52 @@ export default function PublicExplorer() {
 
       {/* Problem Drawer Modal */}
       {problemDetail && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true">
-          <section className="detail-drawer">
-            <button className="close-button" onClick={() => setProblemDetail(null)} aria-label="Close problem">×</button>
-            <span className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <strong>{problemDetail.ngoProfile?.organizationName || 'NGO Partner'}</strong>
-              {problemDetail.ngoProfile?.id && (
-                <a 
-                  href={`/profile/ngo/${problemDetail.ngoProfile.id}`}
-                  className="text-link"
-                  style={{ fontSize: '0.85rem' }}
-                >
-                  (View NGO Profile)
-                </a>
-              )}
-              <span>· {problemDetail.domain}</span>
-            </span>
-            <h2>{problemDetail.title}</h2>
-            <p style={{ marginTop: '1.5rem', marginBottom: '1.5rem', lineHeight: '1.6' }}>{problemDetail.description}</p>
-            <Badge status={problemDetail.status} />
+        <div 
+          className="modal-backdrop" 
+          role="dialog" 
+          aria-modal="true"
+          onClick={() => setProblemDetail(null)}
+        >
+          <section className="detail-drawer" onClick={(e) => e.stopPropagation()}>
 
-            <div style={{ marginTop: '2rem' }}>
+            {/* ── Scrollable content region ── */}
+            <div className="detail-drawer-body">
+              <button
+                className="close-button"
+                onClick={() => setProblemDetail(null)}
+                aria-label="Close problem"
+                style={{ alignSelf: 'flex-end' }}
+              >×</button>
+
+              <span className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <strong>{problemDetail.ngoProfile?.organizationName || 'NGO Partner'}</strong>
+                {problemDetail.ngoProfile?.id && (
+                  <a 
+                    href={`/profile/ngo/${problemDetail.ngoProfile.id}`}
+                    className="text-link"
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    (View NGO Profile)
+                  </a>
+                )}
+                <span>· {problemDetail.domain}</span>
+              </span>
+
+              <h2>{problemDetail.title}</h2>
+
+              <p style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {problemDetail.description}
+              </p>
+
+              <Badge status={problemDetail.status} />
+            </div>
+
+            {/* ── Sticky footer — Apply button always visible ── */}
+            <div className="detail-drawer-footer">
               {!token ? (
                 <button 
                   className="primary-button" 
+                  style={{ width: '100%', justifyContent: 'center' }}
                   onClick={() => {
                     setProblemDetail(null)
                     window.dispatchEvent(new CustomEvent('dots:open-auth'))
@@ -332,12 +366,13 @@ export default function PublicExplorer() {
                 </button>
               ) : role === 'CONTRIBUTOR' ? (
                 appliedIds.has(problemDetail.id) ? (
-                  <button className="primary-button" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                  <button className="primary-button" disabled style={{ opacity: 0.6, cursor: 'not-allowed', width: '100%', justifyContent: 'center' }}>
                     Applied ✓
                   </button>
                 ) : (
                   <button 
                     className="primary-button" 
+                    style={{ width: '100%', justifyContent: 'center' }}
                     disabled={applying}
                     onClick={() => handleApply(problemDetail.id)}
                   >
@@ -346,6 +381,7 @@ export default function PublicExplorer() {
                 )
               ) : null}
             </div>
+
           </section>
         </div>
       )}
