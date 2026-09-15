@@ -30,21 +30,18 @@ export default function ContributorWorkspace() {
   const [filter, setFilter] = useState('All domains')
   const [loading, setLoading] = useState(true)
   const [reviews, setReviews] = useState<any[]>([])
-  const [expandedProblemIds, setExpandedProblemIds] = useState<Set<string>>(new Set())
+  const [problemDetail, setProblemDetail] = useState<Problem | null>(null)
 
   const router = useRouter()
 
-  const toggleExpand = (problemId: string) => {
-    setExpandedProblemIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(problemId)) {
-        next.delete(problemId)
-      } else {
-        next.add(problemId)
-      }
-      return next
-    })
-  }
+  useEffect(() => {
+    if (problemDetail) {
+      document.body.classList.add('drawer-open')
+    } else {
+      document.body.classList.remove('drawer-open')
+    }
+    return () => document.body.classList.remove('drawer-open')
+  }, [problemDetail])
 
   const withdrawApplication = async (appId: string) => {
     if (!confirm('Are you sure you want to withdraw/cancel this application?')) return
@@ -202,16 +199,16 @@ export default function ContributorWorkspace() {
               <div className="empty-state">No open problems found matching your filters.</div>
             ) : (
               filtered.map((p) => {
-                const isExpanded = expandedProblemIds.has(p.id)
                 return (
                   <article
-                    className="problem-card"
+                    className="problem-card clickable-card"
                     key={p.id}
+                    onClick={() => setProblemDetail(p)}
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
-                      minHeight: '260px'
+                      minHeight: '270px'
                     }}
                   >
                     <div>
@@ -221,38 +218,37 @@ export default function ContributorWorkspace() {
                       </div>
                       <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem', lineHeight: '1.4' }}>{p.title}</h3>
                       <p
-                        style={
-                          isExpanded
-                            ? { color: 'var(--muted)', fontSize: '0.9rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }
-                            : {
-                                display: '-webkit-box',
-                                WebkitLineClamp: 3,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                color: 'var(--muted)',
-                                fontSize: '0.9rem',
-                                lineHeight: '1.5'
-                              }
-                        }
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          color: 'var(--muted)',
+                          fontSize: '0.9rem',
+                          lineHeight: '1.5'
+                        }}
                       >
                         {p.description}
                       </p>
                       <button
-                        onClick={() => toggleExpand(p.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setProblemDetail(p)
+                        }}
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: '#22c55e',
-                          fontSize: '0.8rem',
+                          color: 'var(--brand)',
+                          fontSize: '0.82rem',
                           cursor: 'pointer',
                           padding: 0,
-                          marginTop: '0.4rem',
+                          marginTop: '0.5rem',
                           fontWeight: 600,
                           display: 'inline-block'
                         }}
                       >
-                        {isExpanded ? 'Collapse ↑' : 'Read full brief ↓'}
+                        Read full brief →
                       </button>
                     </div>
                     <div>
@@ -264,7 +260,14 @@ export default function ContributorWorkspace() {
                         {appliedIds.has(p.id) ? (
                           <span className="published-note" style={{ color: '#22c55e', fontWeight: 600 }}>Applied ✓</span>
                         ) : (
-                          <button className="primary-button" style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem' }} onClick={() => applyToProblem(p.id)}>
+                          <button
+                            className="primary-button"
+                            style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem' }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              applyToProblem(p.id)
+                            }}
+                          >
                             Apply →
                           </button>
                         )}
@@ -349,6 +352,60 @@ export default function ContributorWorkspace() {
           </a>
         </aside>
       </div>
+
+      {/* Problem Detail Drawer Modal */}
+      {problemDetail && (
+        <div 
+          className="modal-backdrop" 
+          role="dialog" 
+          aria-modal="true"
+          onClick={() => setProblemDetail(null)}
+        >
+          <section className="detail-drawer" onClick={(e) => e.stopPropagation()}>
+            <div className="detail-drawer-body">
+              <button
+                className="close-button"
+                onClick={() => setProblemDetail(null)}
+                aria-label="Close problem"
+                style={{ alignSelf: 'flex-end' }}
+              >×</button>
+
+              <span className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <strong>{problemDetail.ngoProfile?.organizationName || 'NGO Partner'}</strong>
+                <span>· {problemDetail.domain}</span>
+              </span>
+
+              <h2>{problemDetail.title}</h2>
+
+              <p style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {problemDetail.description}
+              </p>
+
+              <span className="status-badge status-open">OPEN</span>
+            </div>
+
+            <div className="detail-drawer-footer">
+              {appliedIds.has(problemDetail.id) ? (
+                <button className="primary-button" disabled style={{ opacity: 0.6, cursor: 'not-allowed', width: '100%', justifyContent: 'center' }}>
+                  Applied ✓
+                </button>
+              ) : (
+                <button 
+                  className="primary-button" 
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => {
+                    const id = problemDetail.id
+                    setProblemDetail(null)
+                    applyToProblem(id)
+                  }}
+                >
+                  Apply to this problem →
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   )
 }
