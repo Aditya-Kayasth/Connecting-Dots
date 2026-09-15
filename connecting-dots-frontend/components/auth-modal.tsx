@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { apiPost } from '@/lib/api-client'
 
 export default function AuthModal({
@@ -29,6 +29,15 @@ export default function AuthModal({
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    if (open) {
+      document.body.classList.add('modal-open')
+    } else {
+      document.body.classList.remove('modal-open')
+    }
+    return () => document.body.classList.remove('modal-open')
+  }, [open])
+
   if (!open) return null
 
   const change = (key: keyof typeof form) => (
@@ -36,8 +45,37 @@ export default function AuthModal({
   ) => setForm({ ...form, [key]: e.target.value })
 
   function validatePhone(phone: string): boolean {
-    if (!phone) return true
-    return /^\+?[0-9]{7,15}$/.test(phone.trim())
+    if (!phone || !phone.trim()) return true
+    return /^[0-9]{10}$/.test(phone.trim())
+  }
+
+  async function handleQuickLogin(demoEmail: string, demoPass: string) {
+    setError('')
+    setLoading(true)
+    setMode('signin')
+    setForm(f => ({ ...f, email: demoEmail, password: demoPass }))
+
+    try {
+      const data = await apiPost<any>('/api/v1/core/auth/login', {
+        email: demoEmail,
+        password: demoPass
+      })
+
+      const token = data.token || data.accessToken || data.data?.token
+      if (!token) throw new Error('No session token returned')
+
+      onSuccess(
+        token,
+        data.role || data.data?.role || 'CONTRIBUTOR',
+        data.userId || '',
+        demoEmail
+      )
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to sign in with demo credentials.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -45,7 +83,7 @@ export default function AuthModal({
     setError('')
 
     if (mode === 'register' && form.contactNumber && !validatePhone(form.contactNumber)) {
-      setError('Please enter a valid phone number (7 to 15 digits, optional + prefix).')
+      setError('Phone number must be exactly 10 numeric digits (e.g. 9876543210).')
       return
     }
 
@@ -92,13 +130,55 @@ export default function AuthModal({
   }
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-      <div className="auth-modal" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+    <div 
+      className="modal-backdrop" 
+      role="dialog" 
+      aria-modal="true" 
+      aria-labelledby="auth-title"
+      onClick={onClose}
+    >
+      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
         <button className="close-button auth-close" onClick={onClose} aria-label="Close authentication dialog">
           ×
         </button>
         <span className="eyebrow">Connecting Dots access</span>
         <h2 id="auth-title">{mode === 'signin' ? 'Welcome back.' : 'Join the community.'}</h2>
+
+        {/* Quick Demo Login Choices */}
+        <div style={{ marginBottom: '1.25rem', padding: '0.85rem', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: '6px' }}>
+          <span className="eyebrow" style={{ fontSize: '0.75rem', marginBottom: '0.5rem', display: 'block' }}>
+            Quick Demo Login (One-Click Test Account)
+          </span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="outline-button"
+              disabled={loading}
+              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center' }}
+              onClick={() => handleQuickLogin('ngo_test@connectingdots.org', 'password123')}
+            >
+              Test NGO
+            </button>
+            <button
+              type="button"
+              className="outline-button"
+              disabled={loading}
+              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center' }}
+              onClick={() => handleQuickLogin('contributor_test@connectingdots.org', 'password123')}
+            >
+              Test Contributor
+            </button>
+            <button
+              type="button"
+              className="outline-button"
+              disabled={loading}
+              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center' }}
+              onClick={() => handleQuickLogin('admin@connectingdots.org', 'Admin@1234')}
+            >
+              Admin
+            </button>
+          </div>
+        </div>
 
         <div className="auth-tabs">
           <button
@@ -199,12 +279,13 @@ export default function AuthModal({
               )}
 
               <label>
-                Contact Number (Phone)
+                Contact Number (10 digits)
                 <input
                   type="tel"
                   value={form.contactNumber}
                   onChange={change('contactNumber')}
-                  placeholder="e.g. +15550192831"
+                  placeholder="e.g. 9876543210"
+                  maxLength={10}
                 />
               </label>
 
