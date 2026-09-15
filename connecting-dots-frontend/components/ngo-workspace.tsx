@@ -14,6 +14,8 @@ type Problem = {
   description: string
   domain: string
   status: Status
+  sourceFileUrl?: string
+  sourceType?: string
 }
 
 type Applicant = {
@@ -24,7 +26,37 @@ type Applicant = {
   status: string
 }
 
-const allowedTypes = [".pdf", ".png", ".jpg", ".mp3", ".wav", ".m4a"]
+const allowedTypes = [".pdf", ".docx", ".txt", ".png", ".jpg", ".jpeg", ".mp3", ".wav", ".m4a"]
+
+function getSourceCategory(fileType?: string) {
+  const type = (fileType || "").toUpperCase()
+  if (["PNG", "JPG", "JPEG", "WEBP"].includes(type)) {
+    return {
+      tag: "IMAGE",
+      label: "Handwritten Note Photo / Image Scan",
+      details: "OCR Vision Engine active — will extract handwritten & printed text"
+    }
+  }
+  if (["PDF", "DOCX", "TXT"].includes(type)) {
+    return {
+      tag: "DOC",
+      label: "Document Specification",
+      details: "Full-text parser active — will extract structured problem scope & objectives"
+    }
+  }
+  if (["MP3", "WAV", "M4A"].includes(type)) {
+    return {
+      tag: "AUDIO",
+      label: "Field Audio Recording",
+      details: "Speech-to-Text Speech engine active — will transcribe audio notes"
+    }
+  }
+  return {
+    tag: "FILE",
+    label: "Uploaded Source File",
+    details: "Staged for AI ingestion & structuring"
+  }
+}
 
 function StatusPill({ status }: { status: string }) {
   return <span className={`status-badge status-${status.toLowerCase()}`}>{status}</span>
@@ -42,6 +74,17 @@ export default function NgoWorkspace() {
 
   const router = useRouter()
 
+  const [loading, setLoading] = useState(true)
+  const [form, setForm] = useState({ title: "", description: "", domain: "", tags: "" })
+  const [fileUrl, setFileUrl] = useState("")
+  const [fileType, setFileType] = useState("")
+  const [fileName, setFileName] = useState("")
+  const [fileSize, setFileSize] = useState("")
+  const [reviewingDraft, setReviewingDraft] = useState<any | null>(null)
+
+  const dirty = Boolean(form.title.trim() || form.description.trim() || form.tags.trim())
+  const dragRef = useRef<HTMLLabelElement>(null)
+
   // Redirect to home if logged out
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -52,26 +95,6 @@ export default function NgoWorkspace() {
       }
     }
   }, [router])
-
-  // Poll workspace while any problem is in PROCESSING status
-  useEffect(() => {
-    const hasProcessing = problems.some((p) => p.status === "PROCESSING")
-    if (!hasProcessing) return
-
-    const interval = setInterval(() => {
-      fetchWorkspace()
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [problems])
-  const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ title: "", description: "", domain: "", tags: "" })
-  const [fileUrl, setFileUrl] = useState("")
-  const [fileType, setFileType] = useState("")
-  const [reviewingDraft, setReviewingDraft] = useState<any | null>(null)
-
-  const dirty = Boolean(form.title.trim() || form.description.trim() || form.tags.trim())
-  const dragRef = useRef<HTMLLabelElement>(null)
 
   const fetchWorkspace = async () => {
     try {
@@ -144,13 +167,13 @@ export default function NgoWorkspace() {
         setProblems(ngoProblems)
 
         if (newlyProcessed && !reviewingDraft) {
-          notify(`AI brief structured for "${newlyProcessed.title}"!`)
+          notify(`AI brief structured for "${newlyProcessed.title}". Click Review to publish.`)
           setReviewingDraft(newlyProcessed)
         }
       } catch (err) {
         console.error("Polling error:", err)
       }
-    }, 4000)
+    }, 3000)
 
     return () => clearInterval(timer)
   }, [problems, profile, reviewingDraft])
@@ -168,29 +191,42 @@ export default function NgoWorkspace() {
     }
   }, [dirty])
 
+  // Lock background body scroll when review & publish modal is open
+  useEffect(() => {
+    if (reviewingDraft) {
+      document.body.classList.add("modal-open")
+    } else {
+      document.body.classList.remove("modal-open")
+    }
+    return () => document.body.classList.remove("modal-open")
+  }, [reviewingDraft])
+
   function notify(text: string) {
     setMessage(text)
-    window.setTimeout(() => setMessage(""), 3500)
+    window.setTimeout(() => setMessage(""), 4000)
   }
 
   function validateFile(file?: File) {
     if (!file) return
     const extension = `.${file.name.split(".").pop()?.toLowerCase()}`
     if (!allowedTypes.includes(extension)) {
-      return setUploadError("Use PDF, PNG, JPG, MP3, WAV, or M4A files only.")
+      return setUploadError("Unsupported format. Please use PDF, DOCX, TXT documents, PNG/JPG photos (handwritten notes/scans), or MP3/WAV audio files.")
     }
     if (file.size > 10 * 1024 * 1024) {
       return setUploadError("Files must be 10MB or smaller.")
     }
     setUploadError("")
     setUploadProgress(8)
+    setFileName(file.name)
+    const sizeInMb = (file.size / (1024 * 1024)).toFixed(2) + " MB"
+    setFileSize(sizeInMb)
 
     uploadFileToCloudinary(file)
       .then((url) => {
         setUploadProgress(100)
         setFileUrl(url)
         setFileType(extension.toUpperCase().replace(".", ""))
-        notify("Source material uploaded to Cloudinary.")
+        notify(`Source material "${file.name}" uploaded successfully. Ready for AI ingestion.`)
       })
       .catch((err) => {
         console.warn("Real Cloudinary upload failed. Falling back to mock upload:", err)
@@ -208,7 +244,7 @@ export default function NgoWorkspace() {
         window.clearInterval(timer)
         setFileUrl(`https://res.cloudinary.com/connecting-dots/image/upload/v123456789/${file.name}`)
         setFileType(extension.toUpperCase().replace(".", ""))
-        notify("Source material uploaded to Cloudinary.")
+        notify(`Source material "${file.name}" uploaded successfully. Ready for AI ingestion.`)
       }
     }, 170)
   }
@@ -216,10 +252,15 @@ export default function NgoWorkspace() {
   async function submitProblem(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!form.description.trim() && !fileUrl) {
-      notify("Please type instructions/description or upload a document.")
+      notify("Please type problem instructions or upload a document / photo scan.")
       return
     }
-    notify("Submission received. AI structuring has started.")
+
+    notify("Step 1/3: Staging source media payload...")
+    setTimeout(() => {
+      notify("Step 2/3: Dispatching task to AI Ingestion Engine (OCR & NLP parsing)...")
+    }, 1200)
+
     try {
       const response = await apiRequest<any>("/api/v1/core/problem-statements", {
         method: "POST",
@@ -236,6 +277,8 @@ export default function NgoWorkspace() {
       setForm({ title: "", description: "", domain: "", tags: "" })
       setFileUrl("")
       setFileType("")
+      setFileName("")
+      setFileSize("")
       setUploadProgress(0)
       
       // Auto-trigger ingestion task for AI processing
@@ -244,9 +287,14 @@ export default function NgoWorkspace() {
           .catch((err) => console.error("Auto-ingestion trigger failed:", err))
       }
 
+      setTimeout(() => {
+        notify("Step 3/3: Queued in AI Review Queue. AI is structuring your problem brief.")
+      }, 2500)
+
       fetchWorkspace()
     } catch (err) {
       console.error("Failed to submit problem statement:", err)
+      notify("Error submitting problem statement. Please check connection.")
     }
   }
 
@@ -293,43 +341,59 @@ export default function NgoWorkspace() {
           <div className="section-heading">
             <div>
               <span className="eyebrow">01 / New submission</span>
-              <h2>Share a problem</h2>
+              <h2>Share a problem statement</h2>
             </div>
-            <span className="section-count">PDF · audio · image accepted</span>
+            <span className="section-count" style={{ background: 'var(--card)', color: 'var(--muted)', border: '1px solid var(--line)', padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 500 }}>
+              PDF/DOCX · Image Scans · Audio
+            </span>
           </div>
 
           <form className="submit-panel" onSubmit={submitProblem}>
             <label>
-              Describe your problem, goals, or write instructions for the AI
+              Describe problem details, key objectives, or instructions for AI parsing
               <textarea
                 required={!fileUrl}
-                placeholder="Describe the challenge you are trying to solve, the people affected, or copy/paste instructions for the AI."
+                placeholder={`Enter problem details or paste instructions for the AI parsing engine...\n\nSupported Inputs & Enterprise Guidance:\n• Direct Description: State the background problem, target community impact, and required tech skills.\n• Handwritten Notes & Scans: Upload a clear photograph/scan of handwritten problem notes below.\n• Documents & Reports: Upload project scope documents (PDF, DOCX, TXT) or field audio (MP3, WAV).`}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={6}
-                style={{ minHeight: '120px' }}
+                style={{ minHeight: '135px', lineHeight: '1.5', fontFamily: 'inherit' }}
               />
             </label>
+
             {fileUrl ? (
-              <div className="uploaded-file-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', border: '1.5px solid #22c55e', borderRadius: '10px', background: 'rgba(34, 197, 94, 0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '50%', background: '#22c55e', color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>✓</span>
+              <div className="uploaded-file-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', border: '1px solid var(--line)', borderRadius: '6px', background: 'var(--card)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', background: 'var(--brand)', color: '#fff', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                    {getSourceCategory(fileType).tag}
+                  </span>
                   <div>
-                    <strong style={{ display: 'block', color: 'var(--foreground)', fontSize: '0.95rem' }}>Source material uploaded to Cloudinary</strong>
-                    <small style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>Type: {fileType || "File"} · Ready for AI structuring</small>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <strong style={{ color: 'var(--foreground)', fontSize: '0.95rem' }}>
+                        {fileName || `Uploaded ${fileType || "File"}`}
+                      </strong>
+                      <span style={{ background: 'var(--brand)', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                        UPLOADED
+                      </span>
+                    </div>
+                    <small style={{ color: 'var(--muted)', fontSize: '0.82rem', display: 'block', marginTop: '0.15rem' }}>
+                      <strong>{getSourceCategory(fileType).label}</strong> {fileSize ? `(${fileSize})` : ''} · {getSourceCategory(fileType).details}
+                    </small>
                   </div>
                 </div>
                 <button
                   type="button"
                   className="outline-button"
-                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer' }}
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer', color: '#ef4444', borderColor: '#ef4444' }}
                   onClick={() => {
                     setFileUrl("")
                     setFileType("")
+                    setFileName("")
+                    setFileSize("")
                     setUploadProgress(0)
                   }}
                 >
-                  Remove ✕
+                  Remove
                 </button>
               </div>
             ) : (
@@ -346,26 +410,31 @@ export default function NgoWorkspace() {
                   dragRef.current?.classList.remove("drag-active")
                   validateFile(e.dataTransfer.files[0])
                 }}
+                style={{ padding: '1.75rem 1rem', textAlign: 'center' }}
               >
-                <span>＋</span>
-                <strong>Drop source material here</strong>
-                <small>PDF, PNG, JPG, MP3, WAV, or M4A · max 10MB</small>
+                <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '0.25rem', fontWeight: 'bold' }}>+</span>
+                <strong style={{ fontSize: '1rem', display: 'block', color: 'var(--foreground)' }}>
+                  Drop source material, project brief, or handwritten note photo here
+                </strong>
+                <small style={{ display: 'block', marginTop: '0.35rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
+                  PDF, DOCX, TXT · PNG, JPG (Handwritten Notes & Document Scans) · MP3, WAV · Max 10MB
+                </small>
                 <input
                   type="file"
-                  accept=".pdf,.png,.jpg,.mp3,.wav,.m4a"
+                  accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.mp3,.wav,.m4a"
                   onChange={(e) => validateFile(e.target.files?.[0])}
                 />
                 {uploadProgress > 0 && uploadProgress < 100 && (
-                  <div className="upload-progress">
+                  <div className="upload-progress" style={{ marginTop: '0.75rem' }}>
                     <i style={{ width: `${uploadProgress}%` }} />
-                    <small>Uploading to Cloudinary… {uploadProgress}%</small>
+                    <small>Uploading file & preparing AI staging… {uploadProgress}%</small>
                   </div>
                 )}
               </label>
             )}
 
-            <button className="primary-button" type="submit">
-              Submit for AI structuring <span>→</span>
+            <button className="primary-button" type="submit" style={{ marginTop: '0.5rem' }}>
+              Submit for AI Ingestion & Structuring
             </button>
           </form>
 
@@ -395,14 +464,25 @@ export default function NgoWorkspace() {
                       <StatusPill status={draft.status} />
                       <span className="draft-id">PS-{draft.id.slice(0, 4)}</span>
                     </div>
-                    <h3>{draft.title}</h3>
-                    <p>{draft.description}</p>
-                    <div className="tag-row">
-                      <span>#{draft.domain}</span>
+                    <h3>{draft.title || "Untitled Problem Draft"}</h3>
+                    <p className="line-clamp-4">{draft.description}</p>
+                    
+                    {draft.sourceType && (
+                      <div style={{ marginTop: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'var(--card)', border: '1px solid var(--line)', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', color: 'var(--muted)' }}>
+                        <strong style={{ color: 'var(--brand)' }}>[{getSourceCategory(draft.sourceType).tag}]</strong>
+                        <span>Source: {getSourceCategory(draft.sourceType).label} ({draft.sourceType})</span>
+                      </div>
+                    )}
+
+                    <div className="tag-row" style={{ marginTop: '0.75rem' }}>
+                      <span>#{draft.domain || 'Uncategorized'}</span>
                     </div>
+
                     <div className="draft-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                       {draft.status === "PROCESSING" ? (
-                        <span className="processing-note">AI is structuring this submission…</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--brand)', fontSize: '0.85rem', fontWeight: 500 }}>
+                          <span>AI Ingestion Engine active: Extracting key requirements & domain taxonomy...</span>
+                        </div>
                       ) : draft.status === "OPEN" ? (
                         <>
                           <span className="published-note">Published to contributors</span>
@@ -424,7 +504,7 @@ export default function NgoWorkspace() {
                           className="primary-button"
                           onClick={() => setReviewingDraft(draft)}
                         >
-                          Review brief
+                          Review brief & Publish
                         </button>
                       )}
                       <button
@@ -436,11 +516,11 @@ export default function NgoWorkspace() {
                             await apiRequest(`/api/v1/core/problem-statements/${draft.id}`, {
                               method: "DELETE"
                             })
-                            alert("✓ Problem statement deleted successfully.")
+                            notify("Problem statement deleted successfully.")
                             fetchWorkspace()
                           } catch (err) {
                             console.error("Failed to delete problem statement:", err)
-                            alert("Failed to delete problem statement.")
+                            notify("Failed to delete problem statement.")
                           }
                         }}
                       >
@@ -521,7 +601,7 @@ export default function NgoWorkspace() {
                         className="primary-button"
                         onClick={() => decide(selectedProblem, applicant.id, "ACCEPTED")}
                       >
-                        Accept <span>→</span>
+                        Accept
                       </button>
                     </div>
                   )}
@@ -534,7 +614,7 @@ export default function NgoWorkspace() {
                             await apiRequest(`/api/v1/core/applications/${applicant.id}/complete`, {
                               method: "PUT"
                             })
-                            alert("✓ Project completed successfully! The contributor's completed count has been updated.")
+                            notify("Project completed successfully. Contributor completed count updated.")
                             fetchWorkspace()
                             if (selectedProblem) {
                               const apps = await apiRequest<Applicant[]>(`/api/v1/core/applications/problem/${selectedProblem}`)
@@ -542,11 +622,11 @@ export default function NgoWorkspace() {
                             }
                           } catch (err) {
                             console.error("Failed to complete project:", err)
-                            alert(err instanceof Error ? err.message : "Failed to mark project completed.")
+                            notify(err instanceof Error ? err.message : "Failed to mark project completed.")
                           }
                         }}
                       >
-                        Mark Completed ✓
+                        Mark Completed
                       </button>
                       <button
                         className="outline-button"
@@ -558,7 +638,7 @@ export default function NgoWorkspace() {
                               method: "PUT",
                               body: { status: "REJECTED" }
                             })
-                            alert("✓ Contributor unassigned. The problem is now re-opened.")
+                            notify("Contributor unassigned. Problem statement re-opened.")
                             fetchWorkspace()
                             if (selectedProblem) {
                               const apps = await apiRequest<Applicant[]>(`/api/v1/core/applications/problem/${selectedProblem}`)
@@ -566,7 +646,7 @@ export default function NgoWorkspace() {
                             }
                           } catch (err) {
                             console.error("Failed to unassign:", err)
-                            alert("Failed to unassign contributor.")
+                            notify("Failed to unassign contributor.")
                           }
                         }}
                       >
@@ -587,14 +667,34 @@ export default function NgoWorkspace() {
       </section>
 
       {reviewingDraft && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true">
-          <div className="edit-modal">
+        <div 
+          className="modal-backdrop" 
+          role="dialog" 
+          aria-modal="true"
+          onClick={() => setReviewingDraft(null)}
+        >
+          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
             <button className="close-button" onClick={() => setReviewingDraft(null)}>×</button>
             <span className="eyebrow">Review AI brief & Publish</span>
             <h2>Verify Problem Statement</h2>
-            <p className="muted" style={{ marginBottom: '1.5rem' }}>
+            <p className="muted" style={{ marginBottom: '1rem' }}>
               Confirm or refine the details below before publishing this opportunity to technical volunteers.
             </p>
+
+            <div style={{ padding: '0.85rem 1.1rem', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: '8px', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: 'var(--brand)', fontSize: '0.88rem' }}>
+                <span>AI Ingestion Report</span>
+                {reviewingDraft.sourceType && (
+                  <span style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--muted)', fontWeight: 'normal' }}>
+                    Source: {getSourceCategory(reviewingDraft.sourceType).tag} ({reviewingDraft.sourceType})
+                  </span>
+                )}
+              </div>
+              <p className="muted" style={{ margin: '0.35rem 0 0 0', fontSize: '0.82rem', lineHeight: '1.5' }}>
+                AI OCR & NLP pipeline successfully structured title, detailed problem description, and category domain from source payload.
+              </p>
+            </div>
+
             <form onSubmit={async (e) => {
               e.preventDefault();
               const target = e.currentTarget;
@@ -612,17 +712,25 @@ export default function NgoWorkspace() {
                 fetchWorkspace();
               } catch (err) {
                 console.error('Failed to publish problem:', err);
+                notify('Failed to publish problem statement.');
               }
             }} className="auth-form" style={{ gap: '1.25rem' }}>
               <label>
                 Title (max 80 chars)
-                <input name="title" defaultValue={reviewingDraft.title} maxLength={80} required />
+                <input 
+                  name="title" 
+                  defaultValue={reviewingDraft.title} 
+                  placeholder="e.g., Solar Powered Water Purification Monitoring System" 
+                  maxLength={80} 
+                  required 
+                />
               </label>
               <label>
                 Description
                 <textarea 
                   name="description" 
                   defaultValue={reviewingDraft.description} 
+                  placeholder="Describe the background problem, requirements, technical scope, and expected outcome..." 
                   rows={8} 
                   required 
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'transparent', color: 'inherit', resize: 'vertical' }}
