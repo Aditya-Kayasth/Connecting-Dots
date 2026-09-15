@@ -28,8 +28,11 @@ export function ReviewsList({ userId }: { userId?: string }) {
       </div>
       <div className="reviews-stack">
         {reviews.length === 0 ? (
-          <div className="empty-state">No reviews received yet.</div>
+          <div className="empty-state" style={{ padding: '1.5rem', border: '1px dashed var(--line)', borderRadius: '8px', background: 'var(--card)' }}>
+            No community reviews posted for this member yet. Reviews are automatically recorded upon completing project milestones.
+          </div>
         ) : (
+
           reviews.map((review) => (
             <article className="review-card" key={review.id}>
               <div className="review-meta">
