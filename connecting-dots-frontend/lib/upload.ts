@@ -5,6 +5,7 @@ export interface CloudinarySignatureResponse {
   signature: string
   apiKey: string
   cloudName: string
+  folder?: string
 }
 
 /**
@@ -24,6 +25,9 @@ export async function uploadFileToCloudinary(file: File): Promise<string> {
   formData.append('api_key', sigData.apiKey)
   formData.append('timestamp', sigData.timestamp.toString())
   formData.append('signature', sigData.signature)
+  if (sigData.folder) {
+    formData.append('folder', sigData.folder)
+  }
 
   // 3. Post to Cloudinary REST endpoint
   const uploadUrl = `https://api.cloudinary.com/v1_1/${sigData.cloudName}/auto/upload`
