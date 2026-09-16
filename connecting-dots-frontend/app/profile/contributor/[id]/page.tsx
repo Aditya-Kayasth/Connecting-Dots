@@ -62,7 +62,7 @@ export default function ContributorPublicProfile() {
     return (
       <main className="page-shell">
         <div className="profile-content" style={{ padding: '4rem', textAlign: 'center' }}>
-          <div className="empty-state" style={{ color: '#ef4444' }}>
+          <div className="empty-state" style={{ color: 'var(--danger, #ef4444)' }}>
             Error: {error || 'Contributor profile not found.'}
           </div>
           <button className="outline-button" onClick={() => router.push('/')} style={{ marginTop: '1.5rem' }}>
@@ -82,11 +82,11 @@ export default function ContributorPublicProfile() {
         <a className="back-link" href="/">← Back to explore</a>
           
           <section className="profile-hero settings-hero">
-            <div className="profile-avatar dynamic-avatar" style={{ background: 'var(--gold-color-muted, #f59e0b)' }}>
+            <div className="profile-avatar dynamic-avatar" style={{ background: '#f1dfb5', color: 'var(--brand-dark)' }}>
               {fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <span className="eyebrow" style={{ color: 'var(--gold-color, #eab308)' }}>Technical Contributor</span>
+              <span className="eyebrow" style={{ color: 'var(--brand)' }}>Technical Contributor</span>
               <h1>{fullName}</h1>
               {contributor.user?.email && (
                 <p className="muted">{contributor.user.email}</p>
@@ -100,8 +100,8 @@ export default function ContributorPublicProfile() {
             </div>
 
             <aside>
-              <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem' }}>Skills & Portfolio</h3>
+              <div style={{ padding: '1.5rem', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', color: 'var(--foreground)' }}>Skills & Portfolio</h3>
                 
                 <div style={{ marginBottom: '1.25rem' }}>
                   <span className="eyebrow" style={{ fontSize: '0.75rem', display: 'block', marginBottom: '0.5rem' }}>Skills summary</span>
@@ -116,18 +116,18 @@ export default function ContributorPublicProfile() {
 
                 <div>
                   <span className="eyebrow" style={{ fontSize: '0.75rem' }}>Preferred language</span>
-                  <p style={{ margin: '0.25rem 0 0 0', textTransform: 'capitalize', color: 'rgba(255,255,255,0.8)' }}>
+                  <p style={{ margin: '0.25rem 0 0 0', textTransform: 'capitalize', color: 'var(--foreground)' }}>
                     {contributor.preferredLanguage === 'sw' ? 'Swahili' : contributor.preferredLanguage === 'hi' ? 'Hindi' : contributor.preferredLanguage === 'mr' ? 'Marathi' : 'English'}
                   </p>
                 </div>
               </div>
 
-              <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Reputation Statistics</h3>
+              <div style={{ padding: '1.5rem', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: '8px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--foreground)' }}>Reputation Statistics</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '6px', padding: '0.75rem 1.25rem', textAlign: 'center' }}>
+                  <div style={{ background: 'var(--background)', border: '1px solid var(--line)', borderRadius: '6px', padding: '0.75rem 1.25rem', textAlign: 'center' }}>
                     <span className="eyebrow" style={{ fontSize: '0.7rem' }}>Completed</span>
-                    <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', fontSize: '1.5rem' }}>{contributor.completedProjects || 0}</p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', fontSize: '1.5rem', color: 'var(--foreground)' }}>{contributor.completedProjects || 0}</p>
                   </div>
                 </div>
               </div>
