@@ -236,13 +236,19 @@ export default function ApplicationDetail({ params }: { params: Promise<{ applic
 
       {/* Review Modal Backdrop */}
       {reviewOpen && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true">
-          <section className="edit-modal">
+        <div 
+          className="modal-backdrop" 
+          role="dialog" 
+          aria-modal="true"
+          onClick={() => setReviewOpen(false)}
+        >
+          <section className="edit-modal" onClick={(e) => e.stopPropagation()}>
             <button className="close-button" onClick={() => setReviewOpen(false)} aria-label="Close review">×</button>
             <ReviewForm applicationId={id} recipientName={application.ngoName} />
           </section>
         </div>
       )}
+
     </main>
   )
 }
