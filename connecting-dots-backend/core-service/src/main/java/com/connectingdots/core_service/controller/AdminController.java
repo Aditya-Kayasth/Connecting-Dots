@@ -25,6 +25,7 @@ public class AdminController {
     private final ApplicationRepository applicationRepository;
     private final NgoProfileRepository ngoProfileRepository;
     private final ContributorProfileRepository contributorProfileRepository;
+    private final com.connectingdots.core_service.service.DemoAccountGuard demoAccountGuard;
 
     @Data
     @Builder
@@ -51,9 +52,15 @@ public class AdminController {
         return ResponseEntity.ok(userRepository.findAll());
     }
 
+    private void checkCallerNotDemoAdmin() {
+        demoAccountGuard.assertNotDemoAccount();
+    }
+
     @DeleteMapping("/users/{id}")
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
+        checkCallerNotDemoAdmin();
+
         String currentEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(currentEmail).orElse(null);
         if (currentUser != null && currentUser.getId().equals(id)) {
@@ -64,7 +71,22 @@ public class AdminController {
         }
 
         User targetUser = userRepository.findById(id).orElse(null);
-        if (targetUser != null && targetUser.getRole() == User.Role.ADMIN) {
+        if (targetUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String targetEmail = targetUser.getEmail().trim().toLowerCase();
+        boolean isTargetDemo = com.connectingdots.core_service.service.DemoAccountGuard.DEMO_EMAILS.contains(targetEmail);
+
+        // 1. System seed demo accounts are protected system entities
+        if (isTargetDemo) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Unauthorized: System seed demo accounts cannot be deleted."
+            );
+        }
+
+        if (targetUser.getRole() == User.Role.ADMIN) {
             long adminCount = userRepository.findAll().stream()
                      .filter(u -> u.getRole() == User.Role.ADMIN)
                      .count();
@@ -76,20 +98,17 @@ public class AdminController {
             }
         }
 
-        if (targetUser != null) {
-            ngoProfileRepository.findByUser(targetUser).ifPresent(p -> {
-                ngoProfileRepository.delete(p);
-                ngoProfileRepository.flush();
-            });
-            contributorProfileRepository.findByUser(targetUser).ifPresent(p -> {
-                contributorProfileRepository.delete(p);
-                contributorProfileRepository.flush();
-            });
-            userRepository.delete(targetUser);
-            userRepository.flush();
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        ngoProfileRepository.findByUser(targetUser).ifPresent(p -> {
+            ngoProfileRepository.delete(p);
+            ngoProfileRepository.flush();
+        });
+        contributorProfileRepository.findByUser(targetUser).ifPresent(p -> {
+            contributorProfileRepository.delete(p);
+            contributorProfileRepository.flush();
+        });
+        userRepository.delete(targetUser);
+        userRepository.flush();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/problems")
@@ -99,6 +118,7 @@ public class AdminController {
 
     @DeleteMapping("/problems/{id}")
     public ResponseEntity<Void> deleteProblemStatement(@PathVariable UUID id) {
+        checkCallerNotDemoAdmin();
         if (problemStatementRepository.existsById(id)) {
             problemStatementRepository.deleteById(id);
             return ResponseEntity.noContent().build();
@@ -115,6 +135,7 @@ public class AdminController {
     public ResponseEntity<com.connectingdots.core_service.entity.NgoProfile> toggleNgoVerification(
             @PathVariable UUID id,
             @RequestParam(required = false) Boolean status) {
+        checkCallerNotDemoAdmin();
         return ngoProfileRepository.findById(id).map(ngo -> {
             boolean newStatus = (status != null) ? status : !ngo.isVerified();
             ngo.setVerified(newStatus);
