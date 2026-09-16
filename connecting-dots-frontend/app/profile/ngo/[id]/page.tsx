@@ -74,7 +74,7 @@ export default function NgoPublicProfile() {
     return (
       <main className="page-shell">
         <div className="profile-content" style={{ padding: '4rem', textAlign: 'center' }}>
-          <div className="empty-state" style={{ color: '#ef4444' }}>
+          <div className="empty-state" style={{ color: 'var(--danger, #ef4444)' }}>
             Error: {error || 'NGO profile not found.'}
           </div>
           <button className="outline-button" onClick={() => router.push('/')} style={{ marginTop: '1.5rem' }}>
@@ -91,11 +91,11 @@ export default function NgoPublicProfile() {
         <a className="back-link" href="/">← Back to explore</a>
           
           <section className="profile-hero settings-hero">
-            <div className="profile-avatar dynamic-avatar" style={{ background: 'var(--green-color-muted, #10b981)' }}>
+            <div className="profile-avatar dynamic-avatar" style={{ background: '#d8efe4', color: 'var(--brand-dark)' }}>
               {(ngo.organizationName || 'N').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <span className="eyebrow" style={{ color: 'var(--green-color, #10b981)' }}>
+              <span className="eyebrow" style={{ color: 'var(--brand)' }}>
                 NGO Partner {ngo.isVerified && '· VERIFIED'}
               </span>
               <h1>{ngo.organizationName}</h1>
@@ -115,18 +115,18 @@ export default function NgoPublicProfile() {
 
               <div className="problem-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 {problems.length === 0 ? (
-                  <div className="empty-state" style={{ border: '1px dashed rgba(255,255,255,0.1)', padding: '2rem', borderRadius: '8px' }}>
+                  <div className="empty-state" style={{ border: '1px dashed var(--line)', padding: '2rem', borderRadius: '8px', background: 'var(--card)', color: 'var(--muted)' }}>
                     No problem statements listed by this NGO yet.
                   </div>
                 ) : (
                   problems.map(p => (
-                    <article className="problem-card" key={p.id} style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <article className="problem-card" key={p.id} style={{ border: '1px solid var(--line)', background: 'var(--card)' }}>
                       <div className="card-meta">
                         <span>{p.domain}</span>
                         <span className={`status-badge status-${p.status.toLowerCase()}`}>{p.status}</span>
                       </div>
                       <h3>{p.title}</h3>
-                      <p style={{ fontSize: '0.9rem', lineHeight: '1.5', margin: '0.75rem 0' }}>{p.description}</p>
+                      <p style={{ fontSize: '0.9rem', lineHeight: '1.6', margin: '0.75rem 0', color: 'var(--muted)' }}>{p.description}</p>
                     </article>
                   ))
                 )}
@@ -134,34 +134,34 @@ export default function NgoPublicProfile() {
             </div>
 
             <aside>
-              <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem' }}>Organization Details</h3>
+              <div style={{ padding: '1.5rem', background: 'var(--card)', border: '1px solid var(--line)', borderRadius: '8px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '1.25rem', color: 'var(--foreground)' }}>Organization Details</h3>
                 
                 <div style={{ marginBottom: '1rem' }}>
                   <span className="eyebrow" style={{ fontSize: '0.75rem' }}>Focus domain</span>
-                  <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold' }}>{ngo.domain}</p>
+                  <p style={{ margin: '0.25rem 0 0 0', fontWeight: 'bold', color: 'var(--foreground)' }}>{ngo.domain}</p>
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <span className="eyebrow" style={{ fontSize: '0.75rem' }}>Contact phone</span>
-                  <p style={{ margin: '0.25rem 0 0 0', color: 'rgba(255,255,255,0.8)' }}>{ngo.contactNumber || 'No contact provided'}</p>
+                  <p style={{ margin: '0.25rem 0 0 0', color: 'var(--foreground)' }}>{ngo.contactNumber || 'No contact provided'}</p>
                 </div>
 
                 {ngo.user?.email && (
                   <div style={{ marginBottom: '1rem' }}>
                     <span className="eyebrow" style={{ fontSize: '0.75rem' }}>Contact email</span>
-                    <p style={{ margin: '0.25rem 0 0 0', color: 'rgba(255,255,255,0.8)' }}>{ngo.user.email}</p>
+                    <p style={{ margin: '0.25rem 0 0 0', color: 'var(--foreground)' }}>{ngo.user.email}</p>
                   </div>
                 )}
 
                 <div style={{ marginBottom: '1rem' }}>
                   <span className="eyebrow" style={{ fontSize: '0.75rem' }}>Location</span>
-                  <p style={{ margin: '0.25rem 0 0 0', color: 'rgba(255,255,255,0.8)' }}>{ngo.location || 'Global Community'}</p>
+                  <p style={{ margin: '0.25rem 0 0 0', color: 'var(--foreground)' }}>{ngo.location || 'Global Community'}</p>
                 </div>
 
                 <div>
                   <span className="eyebrow" style={{ fontSize: '0.75rem' }}>Preferred language</span>
-                  <p style={{ margin: '0.25rem 0 0 0', textTransform: 'capitalize', color: 'rgba(255,255,255,0.8)' }}>
+                  <p style={{ margin: '0.25rem 0 0 0', textTransform: 'capitalize', color: 'var(--foreground)' }}>
                     {ngo.preferredLanguage === 'sw' ? 'Swahili' : ngo.preferredLanguage === 'hi' ? 'Hindi' : ngo.preferredLanguage === 'mr' ? 'Marathi' : 'English'}
                   </p>
                 </div>
