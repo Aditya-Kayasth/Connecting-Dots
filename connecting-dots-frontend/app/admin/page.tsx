@@ -124,16 +124,68 @@ export default function AdminPage() {
     return null;
   };
 
+  const [adminPasswordOpen, setAdminPasswordOpen] = useState(false);
+  const [adminOldPass, setAdminOldPass] = useState("");
+  const [adminNewPass, setAdminNewPass] = useState("");
+  const [adminConfirmPass, setAdminConfirmPass] = useState("");
+  const [adminPassMsg, setAdminPassMsg] = useState("");
+  const [adminPassErr, setAdminPassErr] = useState("");
+  const [adminPassLoading, setAdminPassLoading] = useState(false);
+
+  async function handleAdminPasswordChange(e: React.FormEvent) {
+    e.preventDefault();
+    setAdminPassMsg("");
+    setAdminPassErr("");
+
+    if (!adminOldPass) {
+      setAdminPassErr("Current password is required.");
+      return;
+    }
+    if (adminNewPass.length < 6) {
+      setAdminPassErr("New password must be at least 6 characters long.");
+      return;
+    }
+    if (adminNewPass !== adminConfirmPass) {
+      setAdminPassErr("New password and confirmation do not match.");
+      return;
+    }
+
+    setAdminPassLoading(true);
+    try {
+      await apiRequest("/api/v1/core/auth/change-password", {
+        method: "POST",
+        body: { oldPassword: adminOldPass, newPassword: adminNewPass }
+      });
+      setAdminPassMsg("✓ Admin password updated successfully!");
+      setAdminOldPass("");
+      setAdminNewPass("");
+      setAdminConfirmPass("");
+      setTimeout(() => {
+        setAdminPassMsg("");
+        setAdminPasswordOpen(false);
+      }, 2500);
+    } catch (err: any) {
+      setAdminPassErr(err.message || "Failed to update admin password.");
+    } finally {
+      setAdminPassLoading(false);
+    }
+  }
+
   return (
     <main className="admin-shell">
       <div className="admin-content">
+        <a className="back-link" href="/">← Back to explore</a>
+
         <div className="admin-intro">
           <div>
             <span className="eyebrow">Operations center</span>
             <h1>Platform overview</h1>
             <p className="muted">Keep the Connecting Dots community trusted, safe, and moving forward.</p>
           </div>
-          <button className="ghost-button" onClick={() => location.reload()}>Refresh data</button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button className="ghost-button" onClick={() => location.reload()}>Refresh data</button>
+            <button className="outline-button" onClick={() => setAdminPasswordOpen(true)}>Change Password</button>
+          </div>
         </div>
 
         {loading ? (
@@ -278,10 +330,78 @@ export default function AdminPage() {
             />
           </section>
         </div>
+
+        {adminPasswordOpen && (
+          <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => setAdminPasswordOpen(false)}>
+            <div className="edit-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+              <button className="close-button" onClick={() => setAdminPasswordOpen(false)}>×</button>
+              <span className="eyebrow">Admin Security</span>
+              <h2>Change Admin Password</h2>
+              <p className="muted" style={{ fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                Account Email: <strong>{sessionEmail || "admin@connectingdots.org"}</strong>
+              </p>
+
+              <form onSubmit={handleAdminPasswordChange} style={{ display: 'grid', gap: '1rem' }}>
+                <label style={{ display: 'grid', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  Current Password *
+                  <input
+                    className="profile-input"
+                    type="password"
+                    value={adminOldPass}
+                    onChange={(e) => setAdminOldPass(e.target.value)}
+                    required
+                  />
+                </label>
+                <label style={{ display: 'grid', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  New Password *
+                  <input
+                    className="profile-input"
+                    type="password"
+                    value={adminNewPass}
+                    onChange={(e) => setAdminNewPass(e.target.value)}
+                    required
+                  />
+                </label>
+                <label style={{ display: 'grid', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  Confirm New Password *
+                  <input
+                    className="profile-input"
+                    type="password"
+                    value={adminConfirmPass}
+                    onChange={(e) => setAdminConfirmPass(e.target.value)}
+                    required
+                  />
+                </label>
+
+                {adminPassErr && (
+                  <p className="form-error" style={{ color: '#ef4444', margin: '0.5rem 0' }} role="alert">
+                    {adminPassErr}
+                  </p>
+                )}
+
+                {adminPassMsg && (
+                  <div style={{ padding: '0.75rem 1rem', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid #22c55e', borderRadius: '6px', color: '#22c55e', fontWeight: 500, fontSize: '0.9rem' }}>
+                    {adminPassMsg}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="primary-button"
+                  disabled={adminPassLoading}
+                  style={{ width: '100%', marginTop: '0.5rem' }}
+                >
+                  {adminPassLoading ? 'Updating...' : 'Save New Password'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
 }
+
 
 function Table({ headers, rows }: { headers: string[]; rows: React.ReactNode[] }) {
   return (
