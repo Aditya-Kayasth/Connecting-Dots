@@ -107,12 +107,20 @@ export default function ProfilePage() {
     fetchProfile();
   }, [mounted, role, router]);
 
+  // Password change states
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMsg, setPasswordMsg] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   async function saveProfile() {
     setSaved(false);
     setErrorMsg('');
 
-    if (contact && !/^\+?[0-9]{7,15}$/.test(contact.trim())) {
-      setErrorMsg('Please enter a valid phone number (7 to 15 digits, optional + prefix).');
+    if (contact && !/^[0-9]{10}$/.test(contact.trim())) {
+      setErrorMsg('Phone number must be exactly 10 numeric digits (e.g. 9876543210).');
       return;
     }
 
@@ -151,6 +159,42 @@ export default function ProfilePage() {
     }
   }
 
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordMsg('');
+    setPasswordError('');
+
+    if (!oldPassword) {
+      setPasswordError('Current password is required.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirmation do not match.');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await apiRequest('/api/v1/core/auth/change-password', {
+        method: 'POST',
+        body: { oldPassword, newPassword }
+      });
+      setPasswordMsg('✓ Password updated successfully!');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setPasswordMsg(''), 4000);
+    } catch (err: any) {
+      setPasswordError(err.message || 'Failed to update password. Please check your current password.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  }
+
   async function handleDeleteAccount() {
     if (!confirm('Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.')) {
       return;
@@ -159,7 +203,6 @@ export default function ProfilePage() {
       await apiRequest('/api/v1/core/profiles/me', {
         method: 'DELETE'
       });
-      // Clear authentication storage
       sessionStorage.removeItem('auth_token');
       sessionStorage.removeItem('auth_role');
       sessionStorage.removeItem('auth_email');
@@ -261,7 +304,7 @@ export default function ProfilePage() {
                         className="profile-input"
                         type="tel"
                         value={contact}
-                        placeholder="+15550192831"
+                        placeholder="9876543210"
                         onChange={(e) => { setContact(e.target.value); setSaved(false) }}
                       />
                     </label>
@@ -290,7 +333,7 @@ export default function ProfilePage() {
                         className="profile-input"
                         type="tel"
                         value={contact}
-                        placeholder="+15550192831"
+                        placeholder="9876543210"
                         onChange={(e) => { setContact(e.target.value); setSaved(false) }}
                       />
                     </label>
@@ -355,6 +398,69 @@ export default function ProfilePage() {
               Save profile
             </button>
 
+            {/* Security & Password Change Section */}
+            <div className="security-section" style={{ marginTop: '3.5rem', paddingTop: '2rem', borderTop: '1px solid var(--line)' }}>
+              <span className="eyebrow">Account Security</span>
+              <h3 style={{ fontSize: '1.4rem', margin: '0.25rem 0 1rem 0' }}>Change password</h3>
+              <p className="muted" style={{ fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                Ensure your account is using a strong, unique password to keep your profile secure.
+              </p>
+
+              <form onSubmit={handlePasswordChange} style={{ display: 'grid', gap: '1rem', maxWidth: '480px' }}>
+                <label style={{ display: 'grid', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  Current password *
+                  <input
+                    className="profile-input"
+                    type="password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    required
+                  />
+                </label>
+                <label style={{ display: 'grid', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  New password *
+                  <input
+                    className="profile-input"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                </label>
+                <label style={{ display: 'grid', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  Confirm new password *
+                  <input
+                    className="profile-input"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </label>
+
+                {passwordError && (
+                  <p className="form-error" style={{ color: '#ef4444', margin: '0.5rem 0' }} role="alert">
+                    {passwordError}
+                  </p>
+                )}
+
+                {passwordMsg && (
+                  <div style={{ padding: '0.75rem 1rem', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid #22c55e', borderRadius: '6px', color: '#22c55e', fontWeight: 500, fontSize: '0.9rem' }}>
+                    {passwordMsg}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="outline-button"
+                  disabled={passwordLoading}
+                  style={{ width: 'fit-content', marginTop: '0.5rem' }}
+                >
+                  {passwordLoading ? 'Updating password...' : 'Update password'}
+                </button>
+              </form>
+            </div>
+
             <div className="danger-zone" style={{ marginTop: '3.5rem', paddingTop: '2rem', borderTop: '1px solid rgba(239, 68, 68, 0.2)' }}>
               <h3 style={{ color: '#ef4444', marginBottom: '0.5rem' }}>Danger Zone</h3>
               <p className="muted" style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>
@@ -391,7 +497,7 @@ export default function ProfilePage() {
                   <span>{profile.completedProjects} project{profile.completedProjects > 1 ? 's' : ''} completed</span>
                 </article>
               ) : (
-                <div className="empty-state" style={{ padding: '1rem', border: '1px dashed rgba(255, 255, 255, 0.1)', borderRadius: '6px' }}>
+                <div className="empty-state" style={{ padding: '1rem', border: '1px dashed var(--line)', borderRadius: '6px' }}>
                   No completed projects registered yet.
                 </div>
               )}
