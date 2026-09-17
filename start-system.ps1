@@ -60,19 +60,19 @@ if ($choice -eq "2") {
     Write-Host "-> Using Local Offline Mode." -ForegroundColor Green
 }
 
-# 3. Update AI_WEBHOOK_URL in backend .env configuration
+# 3. Update AI_WEBHOOK_URL in root .env configuration
 Write-Host ""
 Write-Host "Updating AI_WEBHOOK_URL in .env configuration..." -ForegroundColor Yellow
-$backendEnvPath = "$ROOT_DIR\connecting-dots-backend\.env"
-if (Test-Path $backendEnvPath) {
-    $content = Get-Content $backendEnvPath
+$rootEnvPath = "$ROOT_DIR\.env"
+if (Test-Path $rootEnvPath) {
+    $content = Get-Content $rootEnvPath
     if ($content -match "AI_WEBHOOK_URL=") {
         $updated = $content -replace "AI_WEBHOOK_URL=.*", "AI_WEBHOOK_URL=$aiWebhookUrl"
     } else {
         $updated = $content + "`nAI_WEBHOOK_URL=$aiWebhookUrl"
     }
-    $updated | Set-Content $backendEnvPath
-    Write-Host "-> Updated backend .env successfully: $aiWebhookUrl" -ForegroundColor Green
+    $updated | Set-Content $rootEnvPath
+    Write-Host "-> Updated root .env successfully: $aiWebhookUrl" -ForegroundColor Green
 }
 
 # 4. Launch Microservices in separate terminal windows

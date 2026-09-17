@@ -36,10 +36,10 @@ if (-not $tunnelUrl) {
 
 Write-Host "-> Success! New Tunnel URL: $tunnelUrl" -ForegroundColor Green
 
-# 3. Update AI_WEBHOOK_URL in .env files
+# 3. Update AI_WEBHOOK_URL in root .env file
 Write-Host "[3/5] Updating AI_WEBHOOK_URL in .env file..." -ForegroundColor Yellow
 $targetWebhook = "$tunnelUrl/api/v1/ai/webhook"
-$envFiles = @(".\.env", ".\core-service\.env")
+$envFiles = @(".\..\.env")
 
 foreach ($envFile in $envFiles) {
     if (Test-Path $envFile) {
