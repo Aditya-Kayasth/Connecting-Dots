@@ -1,116 +1,90 @@
-# Render Blueprint Deployment Spec for Connecting Dots V2 Microservices
-# Deploy for FREE on Render Hobby Tier (Up to 25 services included)
+# ==============================================================================
+# CONNECTING DOTS V2 — RENDER BLUEPRINT (render.yaml)
+# ------------------------------------------------------------------------------
+# HOW TO USE:
+#   1. Create an Environment Group named "connecting-dots-secrets" in the
+#      Render dashboard (Environment Groups → New) and bulk-paste your real
+#      secrets there (see .env.example for the full list of keys).
+#   2. Commit & push this file to your repo root.
+#   3. In Render: New → Blueprint → connect your repo → Apply.
+#
+# Service URLs are predictable based on the service name below.
+# If any name is already taken on Render, update the downstream env var to match.
+# ==============================================================================
 
 services:
-  # 1. Service Discovery (Eureka Server)
+
+  # ─────────────────────────────────────────────────────────
+  # 1. Service Discovery — Eureka Server (port 8761)
+  # ─────────────────────────────────────────────────────────
   - type: web
-    name: eureka-server
+    name: connecting-dots-eureka-server
     runtime: docker
-    dockerContext: ./connecting-dots-backend/eureka-server
-    dockerfilePath: ./connecting-dots-backend/eureka-server/Dockerfile
     plan: free
+    dockerfilePath: connecting-dots-backend/eureka-server/Dockerfile
+    dockerContext: connecting-dots-backend/eureka-server
     healthCheckPath: /actuator/health
     envVars:
       - key: PORT
         value: "8761"
+      - fromGroup: connecting-dots-secrets
 
-  # 2. Spring Cloud API Gateway
+  # ─────────────────────────────────────────────────────────
+  # 2. API Gateway — Spring Cloud Gateway (port 8080)
+  # ─────────────────────────────────────────────────────────
   - type: web
-    name: gateway-service
+    name: connecting-dots-gateway-service
     runtime: docker
-    dockerContext: ./connecting-dots-backend/gateway-service
-    dockerfilePath: ./connecting-dots-backend/gateway-service/Dockerfile
     plan: free
+    dockerfilePath: connecting-dots-backend/gateway-service/Dockerfile
+    dockerContext: connecting-dots-backend/gateway-service
     envVars:
+      - key: PORT
+        value: "8080"
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: https://eureka-server-06pj.onrender.com/eureka/
+        value: https://connecting-dots-eureka-server.onrender.com/eureka/
       - key: CORE_SERVICE_URL
-        value: https://core-service-9mpw.onrender.com
+        value: https://connecting-dots-core-service.onrender.com
       - key: AI_SERVICE_URL
-        value: https://ai-service-6r96.onrender.com
-      - key: REDIS_URL
-        sync: false
-      - key: REDIS_HOST
-        sync: false
-      - key: REDIS_PORT
-        value: "6379"
-      - key: REDIS_PASSWORD
-        sync: false
+        value: https://connecting-dots-ai-service.onrender.com
+      - fromGroup: connecting-dots-secrets
 
-  # 3. Core Business & Database Service
+  # ─────────────────────────────────────────────────────────
+  # 3. Core Business & Database Service (port 8081)
+  # ─────────────────────────────────────────────────────────
   - type: web
-    name: core-service
+    name: connecting-dots-core-service
     runtime: docker
-    dockerContext: ./connecting-dots-backend/core-service
-    dockerfilePath: ./connecting-dots-backend/core-service/Dockerfile
     plan: free
+    dockerfilePath: connecting-dots-backend/core-service/Dockerfile
+    dockerContext: connecting-dots-backend/core-service
     envVars:
+      - key: PORT
+        value: "8081"
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: https://eureka-server-06pj.onrender.com/eureka/
-      - key: DB_URL
-        sync: false
-      - key: DB_USERNAME
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: SPRING_DATASOURCE_URL
-        sync: false
-      - key: SPRING_DATASOURCE_USERNAME
-        sync: false
-      - key: SPRING_DATASOURCE_PASSWORD
-        sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: REDIS_HOST
-        sync: false
-      - key: REDIS_PORT
-        value: "6379"
-      - key: REDIS_PASSWORD
-        sync: false
-      - key: QSTASH_TOKEN
-        sync: false
+        value: https://connecting-dots-eureka-server.onrender.com/eureka/
+      - key: CORE_SERVICE_URL
+        value: https://connecting-dots-core-service.onrender.com
+      - key: AI_SERVICE_URL
+        value: https://connecting-dots-ai-service.onrender.com
       - key: AI_WEBHOOK_URL
-        sync: false
-      - key: AI_SERVICE_URL
-        value: https://ai-service-6r96.onrender.com
-      - key: CLOUDINARY_CLOUD_NAME
-        sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: INTERNAL_SERVICE_SECRET
-        sync: false
+        value: https://connecting-dots-gateway-service.onrender.com/api/v1/ai/webhook
+      - fromGroup: connecting-dots-secrets
 
-  # 4. Gemini AI Ingestion Worker
+  # ─────────────────────────────────────────────────────────
+  # 4. AI Ingestion Worker — Gemini AI Service (port 8082)
+  # ─────────────────────────────────────────────────────────
   - type: web
-    name: ai-service
+    name: connecting-dots-ai-service
     runtime: docker
-    dockerContext: ./connecting-dots-backend/ai-service
-    dockerfilePath: ./connecting-dots-backend/ai-service/Dockerfile
     plan: free
+    dockerfilePath: connecting-dots-backend/ai-service/Dockerfile
+    dockerContext: connecting-dots-backend/ai-service
     envVars:
+      - key: PORT
+        value: "8082"
       - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: https://eureka-server-06pj.onrender.com/eureka/
+        value: https://connecting-dots-eureka-server.onrender.com/eureka/
       - key: CORE_SERVICE_URL
-        value: https://core-service-9mpw.onrender.com
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: SPRING_AI_GOOGLE_GENAI_API_KEY
-        sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: REDIS_HOST
-        sync: false
-      - key: REDIS_PORT
-        value: "6379"
-      - key: REDIS_PASSWORD
-        sync: false
-      - key: QSTASH_CURRENT_SIGNING_KEY
-        sync: false
-      - key: QSTASH_NEXT_SIGNING_KEY
-        sync: false
-      - key: INTERNAL_SERVICE_SECRET
-        sync: false
+        value: https://connecting-dots-core-service.onrender.com
+      - fromGroup: connecting-dots-secrets
