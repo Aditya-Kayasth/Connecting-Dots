@@ -1,0 +1,113 @@
+services:
+  eureka-server:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-aditya-kayasth}/connecting-dots-v2-eureka-server:latest
+    container_name: eureka-server
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: redis-cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  gateway-service:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-aditya-kayasth}/connecting-dots-v2-gateway-service:latest
+    container_name: gateway-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - REDIS_HOST=redis-cache
+      - REDIS_PORT=6379
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+
+  core-service:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-aditya-kayasth}/connecting-dots-v2-core-service:latest
+    container_name: core-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_URL=${DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis-cache
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - QSTASH_URL=${QSTASH_URL:-https://qstash-us-east-1.upstash.io}
+      - QSTASH_TOKEN=${QSTASH_TOKEN:-}
+      - QSTASH_CURRENT_SIGNING_KEY=${QSTASH_CURRENT_SIGNING_KEY:-}
+      - QSTASH_NEXT_SIGNING_KEY=${QSTASH_NEXT_SIGNING_KEY:-}
+      - AI_WEBHOOK_URL=${AI_WEBHOOK_URL:-}
+      - AI_SERVICE_URL=http://ai-service:8082
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-for-connecting-dots-2026}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-internal-service-secret}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+
+  ai-service:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-aditya-kayasth}/connecting-dots-v2-ai-service:latest
+    container_name: ai-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - CORE_SERVICE_URL=http://core-service:8081
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - SPRING_AI_GOOGLE_GENAI_API_KEY=${GEMINI_API_KEY}
+      - REDIS_HOST=redis-cache
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - QSTASH_CURRENT_SIGNING_KEY=${QSTASH_CURRENT_SIGNING_KEY:-}
+      - QSTASH_NEXT_SIGNING_KEY=${QSTASH_NEXT_SIGNING_KEY:-}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-internal-service-secret}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+    depends_on:
+      - gateway-service
+
+networks:
+  default:
+    name: connecting-dots-prod-network
+    driver: bridge
+
+volumes:
+  caddy-data:
