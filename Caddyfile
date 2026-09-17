@@ -1,0 +1,10 @@
+# Caddyfile: Auto-HTTPS Reverse Proxy for Oracle VM
+# Replace 'connectingdots.duckdns.org' with your DuckDNS subdomain or custom domain
+
+{$DOMAIN:connectingdots.duckdns.org} {
+    # Route all API traffic to Spring Cloud Gateway container
+    reverse_proxy gateway-service:8080
+
+    # Compression
+    encode gzip zstd
+}
