@@ -1,0 +1,122 @@
+Ran command: `.\start-system.ps1
+`
+
+Here are real-world Indian NGO problem statements across different domains — pick one to test:
+
+---
+
+## 🇮🇳 Indian NGO Problem Statements
+
+### 🌾 Rural Agriculture / शेती
+**"Digital Market Access for Marginal Farmers in Vidarbha"**
+> Small and marginal farmers in Vidarbha (Maharashtra) with less than 2 acres cannot access online mandi prices or sell directly to buyers. They are forced to sell through middlemen at 30–40% below market rate. We need a simple SMS/WhatsApp based tool that sends daily Nagpur mandi prices and connects farmers with FPOs (Farmer Producer Organizations).
+
+---
+
+### 🏥 Healthcare / आरोग्य
+**"Maternal Health Tracking in Tribal Blocks of Palghar"**
+> ASHA workers in Palghar's tribal belt track pregnant women using paper registers that get lost during monsoon. Over 60% of high-risk pregnancies are identified too late for intervention. We need an offline-first Android app for ASHA workers to record and flag high-risk cases that syncs when connectivity returns.
+
+---
+
+### 📚 Education / शिक्षण
+**"First-Generation Learners Dropping Out After Class 8 in Rural Pune"**
+> Over 40% of first-generation learners in our villages near Baramati drop out after Class 8 because parents cannot help with homework, and affordable tuition is unavailable. We need a peer-learning matching platform where college students in Pune can do 30-min video sessions with these students for free academic credit.
+
+---
+
+### ♿ Disability / दिव्यांग
+**"Accessible Job Portal for Persons with Visual Impairment in Maharashtra"**
+> Existing job portals (Naukri, LinkedIn) are not screen-reader compatible. Our 800+ registered blind and low-vision members across Nashik and Aurangabad cannot independently apply for jobs. We need a NVDA/JAWS-compatible job listing and application tool in Marathi and Hindi.
+
+---
+
+### 💧 Water / पाणी
+**"Real-Time Handpump Failure Reporting in Marathwada"**
+> 1,200 handpumps across 3 talukas in Osmanabad have no maintenance tracking. When a pump fails, it takes 15–30 days for the Gram Panchayat to report and get it fixed. We need a simple toll-free IVR + web dashboard for gram sevaks to report failures that auto-alerts the district water authority.
+
+---
+
+### 👩 Women Empowerment / महिला सशक्तीकरण
+**"Digital Literacy for SHG Members to Access Government Schemes"**
+> Our 2,000 Self Help Group members across Solapur district cannot independently access Jan Dhan, PM Ujjwala, or Ladki Bahin scheme portals because all government sites are in English with no guidance. We need a Marathi-language step-by-step video + chatbot guide for the 5 most important schemes.
+
+---
+
+## ✍️ For Your Marathi Test
+
+I'd suggest writing the **Water / पाणी** one — it's very grounded and has a clear tech need. Here's the Marathi rough version if you want to adapt it:
+
+> **मराठवाड्यातील हातपंप बंद पडल्याची माहिती त्वरित कळवण्यासाठी प्रणाली**
+> उस्मानाबाद जिल्ह्यातील ३ तालुक्यांमध्ये १,२०० हातपंप आहेत. पंप बंद पडल्यावर ग्रामपंचायतीकडून जिल्हा पाणी विभागाला कळवायला १५ ते ३० दिवस लागतात. ग्रामसेवकांना IVR किंवा SMS द्वारे तक्रार नोंदवता यावी आणि जिल्हा अधिकाऱ्यांना त्वरित सूचना मिळावी अशी प्रणाली आवश्यक आहे.
+
+---
+
+Once your system is running and you submit it — check:
+1. ✅ It appears in the **public explorer** listing
+2. ✅ The AI service processes it and extracts skills/tags
+3. ✅ Contributors can see and apply to it
+
+Good luck with the test! 🚀
+
+
+
+Here are the ready-to-use account creation details and transcribed problem statement information for your two NGOs:
+
+---
+
+### NGO 1: Rural Water & Infrastructure Focus
+
+This NGO will focus on your **first handwritten note in Marathi** (Marathwada Handpump Monitoring System).
+
+#### 1. Account Creation Details (Sign Up Form)
+* **Role:** NGO
+* **Organization Name:** `Marathwada Jal Vikas Foundation`
+* **Domain:** `Environment & Sustainability` *(or Community Development)*
+* **Email Address:** `contact@jalvikas.org` *(or any test email you prefer)*
+* **Password:** `JalVikas@2026`
+* **Contact Number:** `9823456789`
+* **Location:** `Dharashiv (Osmanabad), Maharashtra`
+* **Preferred Language:** `Marathi (mr)`
+
+#### 2. Problem Statement Details to Submit
+* **Image to Upload:** Upload Image 1 (Marathi Note)
+* **Title:** `Handpump Breakdown Fast-Alert System for Marathwada Villages`
+* **Domain:** `Environment & Sustainability`
+* **Marathi Text in Image:**
+  > मराठवाड्यातील हातपंप बंद पडल्याची माहिती त्वरीत कळवण्यासाठी व्यवस्था पाहिजे।  
+  > उस्मानाबाद / धाराशिव जिल्ह्यातील ३ तालुक्यांमध्ये १२०० हातपंप आहे।  
+  > पंप बंद पडल्यावर १५ ते ३० दिवस लागतात ग्राम पंचायतीचा निरोप जिल्हा पाणी विभागाला कळवण्यात।  
+  > यामुळे ग्रामवासीयांना ही असुविधा जास्त वेळ न होण्याची खात्री काही व्यवस्था पाहिजे, जेणेकरून हातपंप बंद पडल्याची सुचना त्वरीत अधीकाऱ्यांना मिळावी।
+
+---
+
+### NGO 2: Disability Inclusion & Accessibility Focus
+
+This NGO will focus on your **second handwritten note in English** (Screen-Reader Accessible Job Portal for Blind Members).
+
+#### 1. Account Creation Details (Sign Up Form)
+* **Role:** NGO
+* **Organization Name:** `Netra Vikas Disability Welfare Society`
+* **Domain:** `Education Technology` *(or Community Development)*
+* **Email Address:** `info@netravikas.org` *(or any test email you prefer)*
+* **Password:** `NetraVikas@2026`
+* **Contact Number:** `9812345678`
+* **Location:** `Nashik & Chhatrapati Sambhajinagar, Maharashtra`
+* **Preferred Language:** `English (en)`
+
+#### 2. Problem Statement Details to Submit
+* **Image to Upload:** Upload Image 2 (English Note)
+* **Title:** `Screen-Reader Accessible Regional Job Portal for Visually Impaired`
+* **Domain:** `Education Technology`
+* **English Text in Image:**
+  > Existing Job Portals are not Screen reader compatible. Our 800+ registered blind and low vision members across Nashik and Sambhajinagar cannot independently apply for jobs.  
+  > We need a solution that could be used to list and apply to jobs in regional language and supports blind people.
+
+---
+
+### Steps to Create & Submit:
+1. Click **Sign in / Register** in the top navigation bar.
+2. Select **Create Account** and switch the role to **NGO**.
+3. Fill in the credentials for **NGO 1**, sign in, and upload Image 1 in your NGO Workspace.
+4. Log out and repeat the steps for **NGO 2** with Image 2.
