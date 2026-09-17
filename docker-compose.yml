@@ -2,10 +2,11 @@ services:
   eureka-server:
     build: ./connecting-dots-backend/eureka-server
     container_name: eureka-server
+    restart: unless-stopped
     ports:
       - "8761:8761"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -13,12 +14,14 @@ services:
   redis-cache:
     image: redis:7-alpine
     container_name: redis-cache
+    restart: unless-stopped
     ports:
       - "6379:6379"
 
   gateway-service:
     build: ./connecting-dots-backend/gateway-service
     container_name: gateway-service
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
@@ -34,6 +37,7 @@ services:
   core-service:
     build: ./connecting-dots-backend/core-service
     container_name: core-service
+    restart: unless-stopped
     ports:
       - "8081:8081"
     environment:
@@ -44,19 +48,20 @@ services:
       - SPRING_DATASOURCE_URL=${DB_URL}
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - QSTASH_URL=${QSTASH_URL}
-      - QSTASH_TOKEN=${QSTASH_TOKEN}
-      - QSTASH_CURRENT_SIGNING_KEY=${QSTASH_CURRENT_SIGNING_KEY}
-      - QSTASH_NEXT_SIGNING_KEY=${QSTASH_NEXT_SIGNING_KEY}
-      - AI_WEBHOOK_URL=${AI_WEBHOOK_URL}
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - JWT_SECRET=${JWT_SECRET}
-      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET}
+      - REDIS_HOST=${REDIS_HOST:-redis-cache}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - QSTASH_URL=${QSTASH_URL:-https://qstash-us-east-1.upstash.io}
+      - QSTASH_TOKEN=${QSTASH_TOKEN:-}
+      - QSTASH_CURRENT_SIGNING_KEY=${QSTASH_CURRENT_SIGNING_KEY:-}
+      - QSTASH_NEXT_SIGNING_KEY=${QSTASH_NEXT_SIGNING_KEY:-}
+      - AI_WEBHOOK_URL=${AI_WEBHOOK_URL:-}
+      - AI_SERVICE_URL=http://ai-service:8082
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-for-connecting-dots-2026}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-internal-service-secret}
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -66,18 +71,20 @@ services:
   ai-service:
     build: ./connecting-dots-backend/ai-service
     container_name: ai-service
+    restart: unless-stopped
     ports:
       - "8082:8082"
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - CORE_SERVICE_URL=http://core-service:8081
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - SPRING_AI_GOOGLE_GENAI_API_KEY=${GEMINI_API_KEY}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - QSTASH_CURRENT_SIGNING_KEY=${QSTASH_CURRENT_SIGNING_KEY}
-      - QSTASH_NEXT_SIGNING_KEY=${QSTASH_NEXT_SIGNING_KEY}
-      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET}
+      - REDIS_HOST=${REDIS_HOST:-redis-cache}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - QSTASH_CURRENT_SIGNING_KEY=${QSTASH_CURRENT_SIGNING_KEY:-}
+      - QSTASH_NEXT_SIGNING_KEY=${QSTASH_NEXT_SIGNING_KEY:-}
+      - INTERNAL_SERVICE_SECRET=${INTERNAL_SERVICE_SECRET:-internal-service-secret}
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -87,6 +94,7 @@ services:
   frontend:
     build: ./connecting-dots-frontend
     container_name: frontend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
