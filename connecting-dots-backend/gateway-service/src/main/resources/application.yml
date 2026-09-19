@@ -33,8 +33,13 @@ spring:
                   - PUT
                   - DELETE
                   - OPTIONS
-                allowedHeaders: "*"
+                allowedHeaders:
+                  - "Content-Type"
+                  - "Authorization"
+                  - "X-Requested-With"
+                  - "X-Internal-Service-Secret"
                 allowCredentials: false
+
           # default-filters for rate limiting can be enabled when Redis is active
           routes:
             - id: core-service-route
@@ -64,7 +69,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: "health"   # Restrict to health only — do NOT expose all in production
   endpoint:
     gateway:
-      enabled: true
+      enabled: false         # Disable gateway route exposure via actuator
+
+logging:
+  level:
+    root: WARN
+    com.connectingdots: INFO
+    org.springframework.cloud.gateway: WARN
+    org.springframework.web: WARN

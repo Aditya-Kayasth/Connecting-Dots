@@ -32,7 +32,15 @@ gemini:
 
 internal:
   service:
-    secret: ${INTERNAL_SERVICE_SECRET:internal-service-secret}
+    secret: ${INTERNAL_SERVICE_SECRET} # No fallback — must be set in Render env group
+
+logging:
+  level:
+    root: WARN
+    com.connectingdots: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+
 
 qstash:
   current-signing-key: ${QSTASH_CURRENT_SIGNING_KEY:}

@@ -23,24 +23,33 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate           # Production: never auto-alter schema — Flyway owns migrations
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-    show-sql: true
+        format_sql: false
+    show-sql: false                # DISABLED: SQL logging is a security/performance risk in production
 
   flyway:
     enabled: true
     locations: classpath:db/migration
-    validate-on-migrate: false   # Allows fixing V1 schema without breaking existing Neon DB history
+    validate-on-migrate: false     # Allows fixing V1 schema without breaking existing Neon DB history
 
 jwt:
-  secret: ${JWT_SECRET:super-secret-jwt-key-for-connecting-dots-2026}
+  secret: ${JWT_SECRET}            # No fallback — JWT_SECRET must be set as a real secret in Render
 
 internal:
   service:
-    secret: ${INTERNAL_SERVICE_SECRET:internal-service-secret}
+    secret: ${INTERNAL_SERVICE_SECRET} # No fallback — must be set in Render env group
+
+logging:
+  level:
+    root: WARN
+    com.connectingdots: INFO           # App-level logs only
+    org.hibernate.SQL: OFF             # Disable SQL statement logging
+    org.hibernate.type: OFF            # Disable SQL parameter logging
+    org.springframework.web: WARN
+    org.springframework.security: WARN
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:}
