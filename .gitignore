@@ -23,6 +23,7 @@ dist/
 .npm
 *.log
 *.zip
+*.tsbuildinfo
 
 # IDE & OS configuration files
 .idea/
