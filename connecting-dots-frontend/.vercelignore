@@ -1,0 +1,9 @@
+# Vercel deployment ignore rules for connecting-dots-frontend
+#
+# The root .env.example contains backend-only secrets (DB, QStash, Gemini, etc.)
+# Vercel should ONLY read connecting-dots-frontend/.env.example for this project.
+# Ignoring the root-level file prevents Vercel from detecting backend env vars
+# as "required" for the frontend deployment.
+
+../.env.example
+../.env
