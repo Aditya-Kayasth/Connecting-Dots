@@ -1,0 +1,9 @@
+
+
+## 🇮🇳 Indian NGO Problem Statements
+
+### 🌾 Rural Agriculture / शेती
+**"Digital Market Access for Marginal Farmers in Vidarbha"**
+> Small and marginal farmers in Vidarbha (Maharashtra) with less than 2 acres cannot access online mandi prices or sell directly to buyers. They are forced to sell through middlemen at 30–40% below market rate. We need a simple SMS/WhatsApp based tool that sends daily Nagpur mandi prices and connects farmers with FPOs (Farmer Producer Organizations).
+
+
