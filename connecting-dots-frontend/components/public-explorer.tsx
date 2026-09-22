@@ -129,7 +129,24 @@ export default function PublicExplorer() {
     return ['All domains', ...Array.from(list)]
   }, [problems])
 
+  const DEMO_EMAILS = new Set([
+    "admin_demo@connectingdots.org",
+    "demo_admin@connectingdots.org",
+    "demo.admin@connectingdots.org",
+    "ngo_demo@connectingdots.org",
+    "ngo_test@connectingdots.org",
+    "contributor_demo@connectingdots.org",
+    "contributor_test@connectingdots.org",
+    "demo.ngo@connectingdots.org",
+    "demo.contributor@connectingdots.org",
+  ])
+
   const handleApply = async (problemId: string) => {
+    const email = (sessionStorage.getItem("auth_email") || "").trim().toLowerCase()
+    if (DEMO_EMAILS.has(email)) {
+      alert("This shared demo account is read-only.\nCreate your own free account to apply for problem statements.")
+      return
+    }
     if (!contributorProfile?.id) return
     setApplying(true)
     try {

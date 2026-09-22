@@ -220,16 +220,30 @@ export default function ApplicationDetail({ params }: { params: Promise<{ applic
               </div>
             )}
 
-            <div className="message-compose">
-              <textarea 
-                value={message} 
-                onChange={e => setMessage(e.target.value)} 
-                placeholder="Write a message to the partner..." 
-                aria-label="Message" 
-              />
-              <button className="primary-button" onClick={send}>Send message</button>
-              <small>Messages poll every 5 seconds for this application only.</small>
-            </div>
+            {application.status === 'WITHDRAWN' || application.status === 'REJECTED' ? (
+              <div style={{
+                marginTop: '1.25rem',
+                padding: '0.9rem 1.1rem',
+                background: '#f8faf9',
+                border: '1px solid var(--line)',
+                borderRadius: '4px',
+                color: 'var(--muted)',
+                fontSize: '0.85rem'
+              }}>
+                🔒 <strong>Application {application.status}</strong> — This chat thread is archived and read-only. All previous messages are preserved for your records.
+              </div>
+            ) : (
+              <div className="message-compose">
+                <textarea 
+                  value={message} 
+                  onChange={e => setMessage(e.target.value)} 
+                  placeholder="Write a message to the partner..." 
+                  aria-label="Message" 
+                />
+                <button className="primary-button" onClick={send}>Send message</button>
+                <small>Messages poll every 5 seconds for this application only.</small>
+              </div>
+            )}
           </section>
         </div>
       </div>

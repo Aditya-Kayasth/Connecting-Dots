@@ -9,7 +9,8 @@ type NGO = {
   id: string;
   organizationName: string;
   domain: string;
-  isVerified: boolean;
+  isVerified?: boolean;
+  verified?: boolean;
   user?: {
     id: string;
   };
@@ -48,6 +49,18 @@ type Stats = {
   totalApplications: number;
 };
 
+const DEMO_EMAILS = new Set([
+  "admin_demo@connectingdots.org",
+  "demo_admin@connectingdots.org",
+  "demo.admin@connectingdots.org",
+  "ngo_demo@connectingdots.org",
+  "ngo_test@connectingdots.org",
+  "contributor_demo@connectingdots.org",
+  "contributor_test@connectingdots.org",
+  "demo.ngo@connectingdots.org",
+  "demo.contributor@connectingdots.org",
+]);
+
 const demo = {
   stats: {
     totalUsers: 0,
@@ -66,17 +79,19 @@ export default function AdminPage() {
   const [busy, setBusy] = useState("");
   const [loading, setLoading] = useState(true);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const token = sessionStorage.getItem("auth_token");
       const role = sessionStorage.getItem("auth_role");
-      const email = sessionStorage.getItem("auth_email");
+      const email = (sessionStorage.getItem("auth_email") || "").trim().toLowerCase();
       if (!token || role !== "ADMIN") {
         router.push("/");
       } else {
         setSessionEmail(email);
+        setIsDemo(DEMO_EMAILS.has(email));
       }
     }
   }, [router]);
@@ -101,6 +116,10 @@ export default function AdminPage() {
   }, []);
 
   const mutate = async (path: string, method: "PUT" | "DELETE", id: string, action: () => void) => {
+    if (isDemo) {
+      alert("This shared demo admin account is read-only.\nLog in with real admin credentials (admin@connectingdots.org) to verify NGOs or manage users.");
+      return;
+    }
     setBusy(id);
     try {
       await apiRequest(path, { method });
@@ -136,6 +155,11 @@ export default function AdminPage() {
     e.preventDefault();
     setAdminPassMsg("");
     setAdminPassErr("");
+
+    if (isDemo) {
+      setAdminPassErr("This shared demo admin account is read-only.");
+      return;
+    }
 
     if (!adminOldPass) {
       setAdminPassErr("Current password is required.");
@@ -188,13 +212,30 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {isDemo && (
+          <div style={{
+            border: '2px solid var(--accent)',
+            background: '#fdf8ec',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '1.75rem',
+            borderRadius: '4px',
+            display: 'grid',
+            gap: '0.35rem'
+          }}>
+            <strong style={{ fontSize: '1rem', color: '#775b20' }}>👀 Demo Admin Account — Read-Only View</strong>
+            <p style={{ margin: 0, color: '#775b20', fontSize: '0.88rem', lineHeight: 1.5 }}>
+              You are signed in using the shared Demo Admin account (<code>{sessionEmail}</code>). You can inspect platform metrics and directory lists, but you cannot verify NGOs or remove users.
+            </p>
+          </div>
+        )}
+
         {loading ? (
           <SkeletonTable rows={2} />
         ) : (
           <div className="stats-grid">
             {[
               ["Total users", data.stats.totalUsers, `${data.users.filter(u => u.role === 'CONTRIBUTOR').length} contributors · ${data.users.filter(u => u.role === 'NGO').length} NGOs`],
-              ["Verified NGOs", data.stats.totalNgos, `${data.ngos.filter(n => n.isVerified).length} verified · ${data.ngos.filter(n => !n.isVerified).length} pending`],
+              ["Verified NGOs", data.stats.totalNgos, `${data.ngos.filter(n => Boolean(n.isVerified ?? n.verified)).length} verified · ${data.ngos.filter(n => !Boolean(n.isVerified ?? n.verified)).length} pending`],
               ["Problem statements", data.stats.totalProblems, `${data.problems.filter(p => p.status === 'OPEN').length} public · ${data.problems.filter(p => p.status !== 'OPEN').length} drafts`],
               ["Applications", data.stats.totalApplications, `${data.stats.totalApplications} volunteer matches`]
             ].map(([label, value, note]) => (
@@ -217,33 +258,36 @@ export default function AdminPage() {
           </div>
           <Table
             headers={['Organization', 'Domain', 'Status', 'Action']}
-            rows={data.ngos.map(n => (
-              <>
-                <td>
-                  <a href={`/profile/ngo/${n.id}`} className="text-link">
-                    <strong>{n.organizationName}</strong>
-                  </a>
-                </td>
-                <td className="muted">{n.domain}</td>
-                <td>
-                  <span className={`status ${n.isVerified ? 'verified' : 'unverified'}`}>
-                    {n.isVerified ? 'VERIFIED' : 'UNVERIFIED'}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    className="table-button"
-                    disabled={busy === n.id}
-                    onClick={() => mutate(`/api/v1/core/admin/ngos/${n.id}/verify`, "PUT", n.id, () => setData(d => ({
-                      ...d,
-                      ngos: d.ngos.map(x => x.id === n.id ? { ...x, isVerified: !x.isVerified } : x)
-                    })))}
-                  >
-                    {busy === n.id ? 'Processing...' : n.isVerified ? 'Revoke' : 'Verify'}
-                  </button>
-                </td>
-              </>
-            ))}
+            rows={data.ngos.map(n => {
+              const isNgoVerified = Boolean(n.isVerified ?? n.verified);
+              return (
+                <>
+                  <td>
+                    <a href={`/profile/ngo/${n.id}`} className="text-link">
+                      <strong>{n.organizationName}</strong>
+                    </a>
+                  </td>
+                  <td className="muted">{n.domain}</td>
+                  <td>
+                    <span className={`status ${isNgoVerified ? 'verified' : 'unverified'}`}>
+                      {isNgoVerified ? 'VERIFIED' : 'UNVERIFIED'}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className="table-button"
+                      disabled={busy === n.id}
+                      onClick={() => mutate(`/api/v1/core/admin/ngos/${n.id}/verify`, "PUT", n.id, () => setData(d => ({
+                        ...d,
+                        ngos: d.ngos.map(x => x.id === n.id ? { ...x, isVerified: !isNgoVerified, verified: !isNgoVerified } : x)
+                      })))}
+                    >
+                      {busy === n.id ? 'Processing...' : isNgoVerified ? 'Revoke' : 'Verify'}
+                    </button>
+                  </td>
+                </>
+              );
+            })}
           />
         </section>
 

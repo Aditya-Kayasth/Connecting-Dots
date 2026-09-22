@@ -84,7 +84,6 @@ export default function NgoWorkspace() {
 
   // Demo account detection — read-only guard
   const DEMO_EMAILS = new Set([
-    "admin@connectingdots.org",
     "ngo_test@connectingdots.org",
     "contributor_test@connectingdots.org",
     "demo.ngo@connectingdots.org",
@@ -534,9 +533,11 @@ export default function NgoWorkspace() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--brand)', fontSize: '0.85rem', fontWeight: 500 }}>
                           <span>AI Ingestion Engine active: Extracting key requirements & domain taxonomy...</span>
                         </div>
-                      ) : draft.status === "OPEN" ? (
+                      ) : draft.status === "OPEN" || draft.status === "IN_PROGRESS" ? (
                         <>
-                          <span className="published-note">Published to contributors</span>
+                          <span className="published-note">
+                            {draft.status === "IN_PROGRESS" ? "Matched & In Progress" : "Published to contributors"}
+                          </span>
                           <button
                             className="secondary-button"
                             onClick={() => {
@@ -548,6 +549,19 @@ export default function NgoWorkspace() {
                             }}
                           >
                             View applications
+                          </button>
+                          <button
+                            className="outline-button"
+                            style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                            onClick={() => {
+                              if (isDemo) {
+                                alert("This shared demo account is read-only.\nCreate your own free account to edit problem statements.")
+                                return
+                              }
+                              setReviewingDraft(draft)
+                            }}
+                          >
+                            Edit Brief
                           </button>
                         </>
                       ) : (
@@ -621,10 +635,9 @@ export default function NgoWorkspace() {
             >
               <option value="">Select problem statement</option>
               {problems
-                .filter((d) => (d.status as string) === "OPEN" || (d.status as string) === "PROCESSED")
                 .map((d) => (
                   <option value={d.id} key={d.id}>
-                    {d.title}
+                    {d.title} ({d.status})
                   </option>
                 ))}
             </select>

@@ -34,7 +34,6 @@ export default function ContributorWorkspace() {
 
   // Demo account detection — read-only guard
   const DEMO_EMAILS = new Set([
-    'admin@connectingdots.org',
     'ngo_test@connectingdots.org',
     'contributor_test@connectingdots.org',
     'demo.ngo@connectingdots.org',
