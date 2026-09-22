@@ -149,33 +149,33 @@ export default function AuthModal({
           <span className="eyebrow" style={{ fontSize: '0.75rem', marginBottom: '0.5rem', display: 'block' }}>
             Quick Demo Login (One-Click Test Account)
           </span>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+          <div className="quick-demo-buttons" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '0.5rem' }}>
             <button
               type="button"
               className="outline-button"
               disabled={loading}
-              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center' }}
-              onClick={() => handleQuickLogin('ngo_test@connectingdots.org', 'password123')}
+              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', minWidth: 0 }}
+              onClick={() => handleQuickLogin('ngo_demo@connectingdots.org', 'password123')}
             >
-              Test NGO
+              Demo NGO
             </button>
             <button
               type="button"
               className="outline-button"
               disabled={loading}
-              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center' }}
-              onClick={() => handleQuickLogin('contributor_test@connectingdots.org', 'password123')}
+              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', minWidth: 0 }}
+              onClick={() => handleQuickLogin('contributor_demo@connectingdots.org', 'password123')}
             >
-              Test Contributor
+              Demo Contributor
             </button>
             <button
               type="button"
               className="outline-button"
               disabled={loading}
-              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center' }}
-              onClick={() => handleQuickLogin('admin@connectingdots.org', 'Admin@1234')}
+              style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', minWidth: 0 }}
+              onClick={() => handleQuickLogin('admin_demo@connectingdots.org', 'password123')}
             >
-              Admin
+              Demo Admin
             </button>
           </div>
         </div>

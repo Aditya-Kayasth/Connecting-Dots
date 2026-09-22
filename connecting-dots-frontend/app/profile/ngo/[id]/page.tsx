@@ -103,7 +103,7 @@ export default function NgoPublicProfile() {
             </div>
           </section>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem', marginTop: '2rem' }}>
+          <div className="profile-detail-grid">
             <div>
               <div className="section-heading" style={{ marginBottom: '1.5rem' }}>
                 <div>

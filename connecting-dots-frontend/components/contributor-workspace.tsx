@@ -32,6 +32,20 @@ export default function ContributorWorkspace() {
   const [reviews, setReviews] = useState<any[]>([])
   const [problemDetail, setProblemDetail] = useState<Problem | null>(null)
 
+  // Demo account detection — read-only guard
+  const DEMO_EMAILS = new Set([
+    'admin@connectingdots.org',
+    'ngo_test@connectingdots.org',
+    'contributor_test@connectingdots.org',
+    'demo.ngo@connectingdots.org',
+    'demo.contributor@connectingdots.org',
+    'demo.admin@connectingdots.org',
+    'ngo_demo@connectingdots.org',
+    'contributor_demo@connectingdots.org',
+    'admin_demo@connectingdots.org',
+  ])
+  const [isDemo, setIsDemo] = useState(false)
+
   const router = useRouter()
 
   useEffect(() => {
@@ -44,6 +58,10 @@ export default function ContributorWorkspace() {
   }, [problemDetail])
 
   const withdrawApplication = async (appId: string) => {
+    if (isDemo) {
+      alert('This shared demo account is read-only.\nCreate your own free account to withdraw applications.')
+      return
+    }
     if (!confirm('Are you sure you want to withdraw/cancel this application?')) return
     try {
       await apiRequest(`/api/v1/core/applications/${appId}/status`, {
@@ -62,9 +80,11 @@ export default function ContributorWorkspace() {
     if (typeof window !== 'undefined') {
       const token = sessionStorage.getItem('auth_token')
       const role = sessionStorage.getItem('auth_role')
+      const email = (sessionStorage.getItem('auth_email') || '').trim().toLowerCase()
       if (!token || role !== 'CONTRIBUTOR') {
         router.push('/')
       }
+      setIsDemo(DEMO_EMAILS.has(email))
     }
   }, [router])
 
@@ -121,6 +141,10 @@ export default function ContributorWorkspace() {
   }, [problems])
 
   const applyToProblem = async (problemId: string) => {
+    if (isDemo) {
+      alert('This shared demo account is read-only.\nCreate your own free account to apply to problems.')
+      return
+    }
     if (!profile) return
     try {
       await apiRequest('/api/v1/core/applications', {

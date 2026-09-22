@@ -10,6 +10,7 @@ type Session = { token: string; role: string; email: string }
 export default function Navbar() {
   const [session, setSession] = useState<Session | null>(null)
   const [authOpen, setAuthOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -39,6 +40,7 @@ export default function Navbar() {
     const formattedRole = role.toUpperCase()
     setAuthSession(token, formattedRole, userId, email)
     setSession({ token, role: formattedRole, email })
+    setMobileOpen(false)
     
     // Auto-redirection upon successful sign-in/registration
     if (formattedRole === 'NGO') {
@@ -56,6 +58,7 @@ export default function Navbar() {
     sessionStorage.removeItem('auth_email')
     sessionStorage.removeItem('auth_user_id')
     setSession(null)
+    setMobileOpen(false)
     window.dispatchEvent(new StorageEvent('storage'))
     
     // Redirect back to landing page on logout
@@ -68,39 +71,56 @@ export default function Navbar() {
     return pathname === path ? 'active-nav' : ''
   }
 
+  const truncateEmail = (emailStr: string) => {
+    if (!emailStr) return ''
+    if (emailStr.length > 18) return emailStr.slice(0, 15) + '…'
+    return emailStr
+  }
+
   return (
     <>
       <nav className="topbar">
         <a className="brand" href="/">
           connecting<span>dots</span>
         </a>
-        <div className="nav-links">
+
+        {/* Mobile Hamburger Toggle Button */}
+        <button 
+          className="mobile-menu-toggle"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Toggle Navigation Menu"
+          aria-expanded={mobileOpen}
+        >
+          {mobileOpen ? '✕' : '☰'}
+        </button>
+
+        <div className={`nav-links ${mobileOpen ? 'mobile-nav-open' : ''}`}>
           {!session ? (
             <>
-              <a href="#problems">Problems</a>
-              <a href="#ngos">NGOs</a>
-              <a href="#contributors">Contributors</a>
-              <button className="primary-button nav-signin" onClick={() => setAuthOpen(true)}>
+              <a href="#problems" onClick={() => setMobileOpen(false)}>Problems</a>
+              <a href="#ngos" onClick={() => setMobileOpen(false)}>NGOs</a>
+              <a href="#contributors" onClick={() => setMobileOpen(false)}>Contributors</a>
+              <button className="primary-button nav-signin" onClick={() => { setMobileOpen(false); setAuthOpen(true); }}>
                 Sign in
               </button>
             </>
           ) : (
             <>
-              <a className={isActive('/')} href="/">Explore</a>
+              <a className={isActive('/')} href="/" onClick={() => setMobileOpen(false)}>Explore</a>
               {role === 'NGO' && (
-                <a className={isActive('/ngo')} href="/ngo">NGO Workspace</a>
+                <a className={isActive('/ngo')} href="/ngo" onClick={() => setMobileOpen(false)}>NGO Workspace</a>
               )}
               {role === 'CONTRIBUTOR' && (
-                <a className={isActive('/contributor')} href="/contributor">My Applications</a>
+                <a className={isActive('/contributor')} href="/contributor" onClick={() => setMobileOpen(false)}>My Applications</a>
               )}
               {role === 'ADMIN' && (
-                <a className={isActive('/admin')} href="/admin">Admin Dashboard</a>
+                <a className={isActive('/admin')} href="/admin" onClick={() => setMobileOpen(false)}>Admin Dashboard</a>
               )}
               {role !== 'ADMIN' && (
-                <a className={isActive('/profile')} href="/profile">My Profile</a>
+                <a className={isActive('/profile')} href="/profile" onClick={() => setMobileOpen(false)}>My Profile</a>
               )}
-              <button className="outline-button" onClick={signOut}>
-                Sign out ({session.email})
+              <button className="outline-button nav-signout" onClick={signOut}>
+                Sign out <span className="nav-email">({truncateEmail(session.email)})</span>
               </button>
             </>
           )}

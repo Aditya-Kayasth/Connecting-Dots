@@ -165,7 +165,7 @@ export default function PublicExplorer() {
           <div className="filter-controls">
             {selectedNgoName && (
               <button 
-                className="filter-pill active" 
+                className="filter-pill" 
                 onClick={() => setSelectedNgoName(null)}
               >
                 NGO: {selectedNgoName} ✕

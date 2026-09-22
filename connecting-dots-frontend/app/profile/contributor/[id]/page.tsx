@@ -94,7 +94,7 @@ export default function ContributorPublicProfile() {
             </div>
           </section>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem', marginTop: '2rem' }}>
+          <div className="profile-detail-grid">
             <div>
               <ReviewsList userId={contributor.user?.id} />
             </div>
