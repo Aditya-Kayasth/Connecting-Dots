@@ -22,12 +22,14 @@ import java.util.Set;
 public class DemoAccountGuard {
 
     public static final Set<String> DEMO_EMAILS = Set.of(
-            "admin@connectingdots.org",
             "ngo_test@connectingdots.org",
             "contributor_test@connectingdots.org",
             "demo.ngo@connectingdots.org",
             "demo.contributor@connectingdots.org",
             "demo.admin@connectingdots.org",
+            "ngo_demo@connectingdots.org",
+            "contributor_demo@connectingdots.org",
+            "admin_demo@connectingdots.org",
             "demo_ngo@connectingdots.org",
             "demo_contributor@connectingdots.org",
             "demo_admin@connectingdots.org"

@@ -1,5 +1,6 @@
 package com.connectingdots.core_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,5 +37,6 @@ public class NgoProfile extends BaseEntity {
 
     @Column(name = "is_verified", nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
+    @JsonProperty("isVerified")
     private boolean isVerified = false;
 }

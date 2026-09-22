@@ -174,15 +174,32 @@ public class ApplicationService {
         ProblemStatement problem = problemStatementRepository.findById(application.getProblemId())
                 .orElseThrow(() -> new RuntimeException("Problem statement not found"));
 
-        // Resolve NGO profile ID if not provided
-        UUID ngoProfileId = requestingNgoProfileId;
-        if (ngoProfileId == null) {
-            ngoProfileId = getAuthenticatedNgoProfileId();
-        }
+        // 3. Authorization Check (Allow Contributor owner or NGO owner or Admin for WITHDRAWN)
+        UUID callerUserId = getAuthenticatedUserId();
+        User callerUser = userRepository.findById(callerUserId)
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
 
-        // 3. Strict Ownership Security Check
-        if (problem.getNgoProfile() == null || !problem.getNgoProfile().getId().equals(ngoProfileId)) {
-            throw new SecurityException("You are not authorized to update applications for this problem statement");
+        if ("WITHDRAWN".equalsIgnoreCase(request.status())) {
+            boolean isContributorOwner = contributorProfileRepository.findById(application.getContributorProfileId())
+                    .map(cp -> cp.getUser() != null && cp.getUser().getId().equals(callerUserId))
+                    .orElse(false);
+
+            boolean isNgoOwner = problem.getNgoProfile() != null && problem.getNgoProfile().getUser() != null &&
+                    problem.getNgoProfile().getUser().getId().equals(callerUserId);
+
+            boolean isAdmin = callerUser.getRole() == User.Role.ADMIN;
+
+            if (!isContributorOwner && !isNgoOwner && !isAdmin) {
+                throw new SecurityException("You are not authorized to withdraw this application");
+            }
+        } else {
+            boolean isNgoOwner = problem.getNgoProfile() != null && problem.getNgoProfile().getUser() != null &&
+                    problem.getNgoProfile().getUser().getId().equals(callerUserId);
+            boolean isAdmin = callerUser.getRole() == User.Role.ADMIN;
+
+            if (!isNgoOwner && !isAdmin) {
+                throw new SecurityException("Only the NGO owner can update application status");
+            }
         }
 
         // 4. Update status and save
@@ -199,6 +216,17 @@ public class ApplicationService {
                 if (!app.getId().equals(applicationId) && "PENDING".equalsIgnoreCase(app.getStatus())) {
                     app.setStatus("REJECTED");
                     applicationRepository.save(app);
+                }
+            }
+        } else if ("WITHDRAWN".equalsIgnoreCase(request.status()) || "REJECTED".equalsIgnoreCase(request.status())) {
+            // If the problem was IN_PROGRESS and no remaining ACCEPTED applications exist, revert to OPEN
+            if (problem.getStatus() == ProblemStatement.Status.IN_PROGRESS) {
+                List<Application> allAppsForProblem = applicationRepository.findByProblemId(problem.getId());
+                boolean hasOtherAccepted = allAppsForProblem.stream()
+                        .anyMatch(a -> !a.getId().equals(applicationId) && "ACCEPTED".equalsIgnoreCase(a.getStatus()));
+                if (!hasOtherAccepted) {
+                    problem.setStatus(ProblemStatement.Status.OPEN);
+                    problemStatementRepository.save(problem);
                 }
             }
         }
