@@ -27,6 +27,9 @@ public class AiProcessingService {
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
+    @Value("${internal.service.secret:}")
+    private String internalServiceSecret;
+
     @Async
     public void processFileAndExtractProblem(IngestionMessage message) {
         try {
@@ -204,6 +207,7 @@ public class AiProcessingService {
             String response = restClient.put()
                     .uri(callbackUrl)
                     .contentType(MediaType.APPLICATION_JSON)
+                    .header("X-Internal-Service-Secret", internalServiceSecret)
                     .body(data)
                     .retrieve()
                     .body(String.class);
