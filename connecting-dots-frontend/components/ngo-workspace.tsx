@@ -82,6 +82,20 @@ export default function NgoWorkspace() {
   const [fileSize, setFileSize] = useState("")
   const [reviewingDraft, setReviewingDraft] = useState<any | null>(null)
 
+  // Demo account detection — read-only guard
+  const DEMO_EMAILS = new Set([
+    "admin@connectingdots.org",
+    "ngo_test@connectingdots.org",
+    "contributor_test@connectingdots.org",
+    "demo.ngo@connectingdots.org",
+    "demo.contributor@connectingdots.org",
+    "demo.admin@connectingdots.org",
+    "ngo_demo@connectingdots.org",
+    "contributor_demo@connectingdots.org",
+    "admin_demo@connectingdots.org",
+  ])
+  const [isDemo, setIsDemo] = useState(false)
+
   const dirty = Boolean(form.title.trim() || form.description.trim() || form.tags.trim())
   const dragRef = useRef<HTMLLabelElement>(null)
 
@@ -90,9 +104,11 @@ export default function NgoWorkspace() {
     if (typeof window !== "undefined") {
       const token = sessionStorage.getItem("auth_token")
       const role = sessionStorage.getItem("auth_role")
+      const email = (sessionStorage.getItem("auth_email") || "").trim().toLowerCase()
       if (!token || role !== "NGO") {
         router.push("/")
       }
+      setIsDemo(DEMO_EMAILS.has(email))
     }
   }, [router])
 
@@ -208,6 +224,13 @@ export default function NgoWorkspace() {
 
   function validateFile(file?: File) {
     if (!file) return
+
+    // Block demo accounts from uploading entirely
+    if (isDemo) {
+      alert("This shared demo account is read-only.\nCreate your own free account to upload documents and submit problem statements.")
+      return
+    }
+
     const extension = `.${file.name.split(".").pop()?.toLowerCase()}`
     if (!allowedTypes.includes(extension)) {
       return setUploadError("Unsupported format. Please use PDF, DOCX, TXT documents, PNG/JPG photos (handwritten notes/scans), or MP3/WAV audio files.")
@@ -251,6 +274,10 @@ export default function NgoWorkspace() {
 
   async function submitProblem(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (isDemo) {
+      alert("This shared demo account is read-only.\nCreate your own free account to submit problem statements.")
+      return
+    }
     if (!form.description.trim() && !fileUrl) {
       notify("Please type problem instructions or upload a document / photo scan.")
       return
@@ -299,6 +326,10 @@ export default function NgoWorkspace() {
   }
 
   async function decide(problemId: string, applicantId: string, decision: "ACCEPTED" | "REJECTED") {
+    if (isDemo) {
+      alert("This shared demo account is read-only.\nCreate your own free account to accept or reject applications.")
+      return
+    }
     try {
       await apiRequest(`/api/v1/core/applications/${applicantId}/status`, {
         method: "PUT",
@@ -348,6 +379,25 @@ export default function NgoWorkspace() {
             </span>
           </div>
 
+          {isDemo ? (
+            <div style={{
+              border: '2px solid var(--accent)',
+              background: '#fdf8ec',
+              padding: '1.5rem',
+              display: 'grid',
+              gap: '0.5rem',
+              borderRadius: '4px'
+            }}>
+              <strong style={{ fontSize: '1rem', color: '#775b20' }}>👀 Demo Account — Read-Only View</strong>
+              <p style={{ margin: 0, color: '#775b20', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                This is a shared demo account. You can explore the workspace and see sample problem statements,
+                but you cannot upload documents, submit problems, or manage applications.
+              </p>
+              <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.82rem' }}>
+                To post real problems and use the AI ingestion pipeline, create your own free NGO account.
+              </p>
+            </div>
+          ) : (
           <form className="submit-panel" onSubmit={submitProblem}>
             <label>
               Describe problem details, key objectives, or instructions for AI parsing
@@ -437,6 +487,7 @@ export default function NgoWorkspace() {
               Submit for AI Ingestion & Structuring
             </button>
           </form>
+          )}
 
           <div className="section-heading draft-heading">
             <div>
@@ -502,7 +553,13 @@ export default function NgoWorkspace() {
                       ) : (
                         <button
                           className="primary-button"
-                          onClick={() => setReviewingDraft(draft)}
+                          onClick={() => {
+                            if (isDemo) {
+                              alert("This shared demo account is read-only.\nCreate your own free account to review and publish problem statements.")
+                              return
+                            }
+                            setReviewingDraft(draft)
+                          }}
                         >
                           Review brief & Publish
                         </button>
@@ -511,6 +568,10 @@ export default function NgoWorkspace() {
                         className="outline-button"
                         style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)' }}
                         onClick={async () => {
+                          if (isDemo) {
+                            alert("This shared demo account is read-only.\nCreate your own free account to delete problem statements.")
+                            return
+                          }
                           if (!confirm("Are you sure you want to delete this problem statement?")) return;
                           try {
                             await apiRequest(`/api/v1/core/problem-statements/${draft.id}`, {
