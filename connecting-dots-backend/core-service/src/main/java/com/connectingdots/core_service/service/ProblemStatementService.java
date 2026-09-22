@@ -177,7 +177,8 @@ public class ProblemStatementService {
 
     @Transactional
     public void updateProblemStatementWithAiResults(java.util.UUID id, com.connectingdots.core_service.dto.AiUpdatePayload payload) {
-        demoAccountGuard.assertNotDemoAccount();
+        // Internal AI-service callback — no user auth context, skip demo guard.
+        // The endpoint is permitAll() in SecurityConfig so authentication is null here.
         ProblemStatement problemStatement = problemStatementRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Problem statement not found"));
         

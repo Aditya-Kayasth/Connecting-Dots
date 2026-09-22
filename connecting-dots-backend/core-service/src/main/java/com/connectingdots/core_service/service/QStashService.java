@@ -25,6 +25,9 @@ public class QStashService {
     @Value("${ai.service.url:http://localhost:8082}")
     private String aiServiceUrl;
 
+    @Value("${internal.service.secret:}")
+    private String internalServiceSecret;
+
     public void publishToAiService(IngestionMessage message) {
         boolean isLocalWebhook = aiWebhookUrl != null && (aiWebhookUrl.contains("localhost") || aiWebhookUrl.contains("127.0.0.1"));
 
@@ -35,6 +38,7 @@ public class QStashService {
                 restClient.post()
                         .uri(java.net.URI.create(localWebhookUrl))
                         .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Internal-Service-Secret", internalServiceSecret)
                         .body(message)
                         .retrieve()
                         .toBodilessEntity();

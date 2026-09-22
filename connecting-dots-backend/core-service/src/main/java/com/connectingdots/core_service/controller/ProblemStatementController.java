@@ -49,8 +49,16 @@ public class ProblemStatementController {
     @PutMapping("/{id}/ai-update")
     public ResponseEntity<String> updateProblemStatementWithAiResults(
             @PathVariable UUID id,
-            @RequestBody com.connectingdots.core_service.dto.AiUpdatePayload payload
+            @RequestBody com.connectingdots.core_service.dto.AiUpdatePayload payload,
+            @org.springframework.web.bind.annotation.RequestHeader(
+                value = "X-Internal-Service-Secret", required = false) String serviceSecret
     ) {
+        // This endpoint is internal-only: only ai-service may call it
+        String expected = System.getenv("INTERNAL_SERVICE_SECRET");
+        if (expected != null && !expected.isBlank() && !expected.equals(serviceSecret)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body("Unauthorized: missing or invalid service secret.");
+        }
         problemStatementService.updateProblemStatementWithAiResults(id, payload);
         return ResponseEntity.ok("Problem statement updated with AI results successfully.");
     }
