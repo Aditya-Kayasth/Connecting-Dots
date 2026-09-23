@@ -124,7 +124,11 @@ export default function ContributorWorkspace() {
   }, [])
 
   const appliedIds = useMemo(() => {
-    return new Set(applications.map((app) => app.problemId))
+    return new Set(
+      applications
+        .filter((app) => app.status !== 'WITHDRAWN' && app.status !== 'REJECTED')
+        .map((app) => app.problemId)
+    )
   }, [applications])
 
   const filtered = useMemo(() => {
@@ -315,10 +319,10 @@ export default function ContributorWorkspace() {
               <div className="empty-state">You have not submitted any applications yet.</div>
             ) : (
               applications.map((a) => (
-                <div className="application-row" key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <a href={`/applications/${a.id}`} style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
+                <div className="application-row" key={a.id}>
+                  <a href={`/applications/${a.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div>
-                      <strong>{a.problemTitle || 'Civic Tech Solution'}</strong>
+                      <strong style={{ fontSize: '1rem', display: 'block', marginBottom: '2px' }}>{a.problemTitle || 'Civic Tech Solution'}</strong>
                       <small>{a.ngoName || 'NGO Partner'} · Application ID: {a.id.slice(0, 8)}</small>
                     </div>
                   </a>
@@ -327,7 +331,7 @@ export default function ContributorWorkspace() {
                     {(a.status === 'PENDING' || a.status === 'ACCEPTED') && (
                       <button
                         className="outline-button"
-                        style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                        style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)', borderRadius: '4px', cursor: 'pointer' }}
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
@@ -337,8 +341,8 @@ export default function ContributorWorkspace() {
                         Withdraw
                       </button>
                     )}
-                    <a href={`/applications/${a.id}`} className="row-arrow" style={{ textDecoration: 'none' }}>→</a>
                   </div>
+                  <a href={`/applications/${a.id}`} className="row-arrow" style={{ textDecoration: 'none', fontSize: '1.1rem', fontWeight: 600 }}>→</a>
                 </div>
               ))
             )}

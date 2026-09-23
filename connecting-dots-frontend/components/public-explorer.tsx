@@ -104,7 +104,10 @@ export default function PublicExplorer() {
         if (profile?.id) {
           const apps = await apiRequest<any[]>(`/api/v1/core/applications/contributor/${profile.id}`)
           if (Array.isArray(apps)) {
-            setAppliedIds(new Set(apps.map(a => a.problemId)))
+            const activeProblemIds = apps
+              .filter((a: any) => a.status !== 'WITHDRAWN' && a.status !== 'REJECTED')
+              .map((a: any) => a.problemId)
+            setAppliedIds(new Set(activeProblemIds))
           }
         }
       } catch (err) {

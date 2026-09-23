@@ -53,13 +53,19 @@ public class ApplicationService {
             throw new IllegalStateException("Problem statement is not open for applications");
         }
 
-        // 4. Check for duplicate application
-        boolean alreadyApplied = applicationRepository.existsByProblemIdAndContributorProfileId(
+        // 4. Check for duplicate/withdrawn application
+        Optional<Application> existingOpt = applicationRepository.findByProblemIdAndContributorProfileId(
                 request.problemId(), request.contributorProfileId()
         );
 
-        if (alreadyApplied) {
-            throw new IllegalStateException("You have already applied to this problem statement");
+        if (existingOpt.isPresent()) {
+            Application existing = existingOpt.get();
+            if ("WITHDRAWN".equalsIgnoreCase(existing.getStatus())) {
+                existing.setStatus("PENDING");
+                return applicationRepository.save(existing);
+            } else {
+                throw new IllegalStateException("You have already applied to this problem statement");
+            }
         }
 
         // 5. Save and return the new application
