@@ -73,6 +73,9 @@ management:
   endpoint:
     gateway:
       enabled: false         # Disable gateway route exposure via actuator
+  health:
+    discovery:
+      enabled: false         # Do not fail /actuator/health when Eureka is sleeping
 
 logging:
   level:
