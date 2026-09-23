@@ -2,24 +2,40 @@ name: Daytime Keep-Alive
 
 on:
   schedule:
-    # Weekdays (Mon-Fri): Runs every 12 mins between 05:30 and 11:30 UTC (11:00 AM - 5:00 PM IST)
-    - cron: '*/12 5-11 * * 1-5'
-    # Weekends (Sat-Sun): Runs every 12 mins between 07:30 and 11:30 UTC (1:00 PM - 5:00 PM IST)
-    - cron: '*/12 7-11 * * 0,6'
-  workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
+    # --- WEEKDAYS (Mon - Fri) ---
+    # 10:50 AM - 11:20 AM IST (05:20 - 05:50 UTC) -> 10:50 AM pre-warms before 11:00 AM
+    - cron: '20,30,40,50 5 * * 1-5'
+    # 11:30 AM - 4:20 PM IST (06:00 - 10:50 UTC) -> Core daytime keep-alive
+    - cron: '*/10 6-10 * * 1-5'
+    # 4:30 PM - 4:50 PM IST (11:00 - 11:20 UTC) -> Final pings (keeps awake until ~5:05 PM)
+    - cron: '0,10,20 11 * * 1-5'
+
+    # --- WEEKENDS (Sat - Sun) ---
+    # 12:50 PM - 1:20 PM IST (07:20 - 07:50 UTC) -> 12:50 PM pre-warms before 1:00 PM
+    - cron: '20,30,40,50 7 * * 0,6'
+    # 1:30 PM - 4:20 PM IST (08:00 - 10:50 UTC) -> Weekend afternoon keep-alive
+    - cron: '*/10 8-10 * * 0,6'
+    # 4:30 PM - 4:50 PM IST (11:00 - 11:20 UTC) -> Final pings (keeps awake until ~5:05 PM)
+    - cron: '0,10,20 11 * * 0,6'
+
+  workflow_dispatch: # Allows manual trigger from GitHub UI anytime
 
 jobs:
-  keep-warm:
+  ping-services:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping All 4 Backend Microservices Simultaneously
+      - name: Ping All 4 Services Simultaneously (180s Buffer)
         run: |
-          echo "Starting parallel warmup pings to Render services..."
-          
-          curl -s -o /dev/null -w "Gateway: %{http_code} (%{time_total}s)\n" -m 120 "https://connecting-dots-gateway-service.onrender.com/actuator/health" &
-          curl -s -o /dev/null -w "Core: %{http_code} (%{time_total}s)\n" -m 120 "https://connecting-dots-core-service.onrender.com/api/v1/core/ping" &
-          curl -s -o /dev/null -w "AI: %{http_code} (%{time_total}s)\n" -m 120 "https://connecting-dots-ai-service.onrender.com/api/v1/ai/ping" &
-          curl -s -o /dev/null -w "Eureka: %{http_code} (%{time_total}s)\n" -m 120 "https://connecting-dots-eureka-server.onrender.com/" &
-          
+          echo "Starting warmup pings at $(date)..."
+
+          # -m 180 allows up to 3 minutes for initial morning cold boots
+          # -s -o /dev/null swallows the response body (no payload size errors)
+          # & runs all 4 curl requests in parallel
+
+          curl -s -o /dev/null -w "Gateway: %{http_code} (%{time_total}s)\n" -m 180 "https://connecting-dots-gateway-service.onrender.com/actuator/health/liveness" &
+          curl -s -o /dev/null -w "Core: %{http_code} (%{time_total}s)\n" -m 180 "https://connecting-dots-core-service.onrender.com/api/v1/core/ping" &
+          curl -s -o /dev/null -w "AI: %{http_code} (%{time_total}s)\n" -m 180 "https://connecting-dots-ai-service.onrender.com/api/v1/ai/ping" &
+          curl -s -o /dev/null -w "Eureka: %{http_code} (%{time_total}s)\n" -m 180 "https://connecting-dots-eureka-server.onrender.com/" &
+
           wait
           echo "All 4 microservices pinged successfully."
