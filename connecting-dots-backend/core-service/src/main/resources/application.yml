@@ -68,6 +68,9 @@ management:
     web:
       exposure:
         include: health, info
+  health:
+    discovery:
+      enabled: false
 
 qstash:
   url: ${QSTASH_URL:https://qstash-us-east-1.upstash.io}
