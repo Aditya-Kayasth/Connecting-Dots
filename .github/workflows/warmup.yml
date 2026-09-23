@@ -1,0 +1,25 @@
+name: Daytime Keep-Alive
+
+on:
+  schedule:
+    # Weekdays (Mon-Fri): Runs every 12 mins between 05:30 and 11:30 UTC (11:00 AM - 5:00 PM IST)
+    - cron: '*/12 5-11 * * 1-5'
+    # Weekends (Sat-Sun): Runs every 12 mins between 07:30 and 11:30 UTC (1:00 PM - 5:00 PM IST)
+    - cron: '*/12 7-11 * * 0,6'
+  workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
+
+jobs:
+  keep-warm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping All 4 Backend Microservices Simultaneously
+        run: |
+          echo "Starting parallel warmup pings to Render services..."
+          
+          curl -s -o /dev/null -w "Gateway: %{http_code} (%{time_total}s)\n" -m 120 "https://connecting-dots-gateway-service.onrender.com/actuator/health" &
+          curl -s -o /dev/null -w "Core: %{http_code} (%{time_total}s)\n" -m 120 "https://connecting-dots-core-service.onrender.com/api/v1/core/ping" &
+          curl -s -o /dev/null -w "AI: %{http_code} (%{time_total}s)\n" -m 120 "https://connecting-dots-ai-service.onrender.com/api/v1/ai/ping" &
+          curl -s -o /dev/null -w "Eureka: %{http_code} (%{time_total}s)\n" -m 120 "https://connecting-dots-eureka-server.onrender.com/" &
+          
+          wait
+          echo "All 4 microservices pinged successfully."
