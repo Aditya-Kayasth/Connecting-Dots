@@ -1,144 +1,101 @@
-# Connecting Dots - Microservices Backend Architecture & Technical Guide
+# Connecting Dots V2 — Master Microservices Backend Architecture
 
-Welcome to the enterprise microservices architecture guide for **Connecting Dots**. This document serves as the master blueprint for understanding how the backend is structured, how data flows across microservices, how containers are orchestrated, and how to explain this project in technical interviews.
-
----
-
-## 1. System Overview
-
-**Connecting Dots** is a social impact platform connecting grassroots Non-Governmental Organizations (NGOs) with technical contributors (software engineers, data scientists, designers). 
-
-NGOs upload unstructured problem statements (such as PDFs, documents, or raw text descriptions). The backend ingests these files, delegates document parsing asynchronously to a dedicated AI microservice powered by Google Gemini LLM, structures the problem into clean categories, and exposes it on a public discovery marketplace for contributors to solve.
+Welcome to the master technical architecture guide for **Connecting Dots V2**. This document provides an executive blueprint of the 4-microservice backend architecture, detailing service interaction patterns, security boundaries, database structures, and asynchronous data flows.
 
 ---
 
-## 2. Directory & Folder Structure
+## 1. System Topology & Architecture Overview
 
-```text
-connecting-dots-backend/
-├── eureka-server/                     # Service Registry & Discovery Server
-│   ├── Dockerfile
-│   ├── EUREKA_SERVER_README.md        # Detailed Eureka Service Guide
-│   ├── pom.xml
-│   └── src/main/java/com/connectingdots/eurekaserver/
-│
-├── gateway-service/                   # API Gateway & Edge Router
-│   ├── Dockerfile
-│   ├── GATEWAY_SERVICE_README.md      # Detailed Gateway Service Guide
-│   ├── pom.xml
-│   └── src/main/java/com/connectingdots/gateway_service/
-│
-├── core-service/                      # Main Business Logic & Database Service
-│   ├── Dockerfile
-│   ├── CORE_SERVICE_README.md         # Detailed Core Service Guide
-│   ├── pom.xml
-│   └── src/main/java/com/connectingdots/core_service/
-│
-├── ai-service/                        # Gemini AI Processing & Async Webhook Service
-│   ├── Dockerfile
-│   ├── AI_SERVICE_README.md           # Detailed AI Service Guide
-│   ├── pom.xml
-│   └── src/main/java/com/connectingdots/ai_service/
-│
-├── BACKEND_ARCHITECTURE.md            # Master Architecture & Technical Guide
-└── restart-system.ps1                 # Local Environment Management Script
-```
-
----
-
-## 3. Microservices Component Breakdown
-
-| Service | Port | Primary Responsibility | Tech Stack |
-| :--- | :--- | :--- | :--- |
-| **`eureka-server`** | `8761` | Dynamic service registration and heartbeat health registry. | Spring Cloud Netflix Eureka |
-| **`gateway-service`** | `8080` | Single edge entry point, routing (`lb://`), CORS, JWT pre-validation, and Redis rate limiting. | Spring Cloud Gateway (WebFlux / Netty), Redis |
-| **`core-service`** | `8081` | User management, Auth, NGO & Contributor Profiles, Applications, Messaging, and Flyway database migrations. | Spring Boot 4, Spring Security, Neon PostgreSQL, Flyway |
-| **`ai-service`** | `8082` | Heavyweight AI document parsing, Gemini LLM structuring, and language translation. | Spring AI 2.0.0, Google GenAI SDK, Upstash QStash |
-
----
-
-## 4. Architecture Diagram & Asynchronous Data Flow
-
-### Architecture Topology
+Connecting Dots V2 is built around a decoupled **4-microservice backend architecture** engineered for scalable civic technology matching between NGOs and technical contributors.
 
 ```mermaid
 graph TD
-    Client["Client App / Next.js Frontend"] -->|HTTP REST| GW["API Gateway (gateway-service: 8080)"]
-
-    subgraph Service Mesh
-        Eureka["Eureka Discovery Server (eureka-server: 8761)"]
-        GW <-->|Service Lookup| Eureka
-        GW -->|lb://core-service| CS["Core Service (core-service: 8081)"]
-        GW -->|lb://ai-service| AI["AI Service (ai-service: 8082)"]
-        CS <-->|Heartbeat| Eureka
-        AI <-->|Heartbeat| Eureka
+    Client["Client App / Next.js Frontend"] -->|HTTP REST via Bearer JWT| GW["1. API Gateway (gateway-service:8080)"]
+    
+    subgraph Service Discovery Mesh
+        Eureka["Eureka Discovery Server (eureka-server:8761)"]
+        GW <-->|Dynamic Service Lookup| Eureka
+        GW -->|lb://core-service| CS["2. Core Business Service (core-service:8081)"]
+        GW -->|lb://ai-service| AI["3. Gemini AI Worker (ai-service:8082)"]
+        CS <-->|Heartbeat Ping| Eureka
+        AI <-->|Heartbeat Ping| Eureka
     end
 
     subgraph Data & Async Tier
-        CS -->|JDBC / JPA| DB[("Neon PostgreSQL")]
-        GW -->|Token Bucket| Redis[("Local Docker Redis")]
-        CS -->|HTTP Publish| QStash["Upstash QStash Queue"]
-        QStash -->|Async Webhook| AI
-        AI -->|Gemini API| Gemini["Google Gemini 3.5 Flash"]
-        AI -->|PUT /ai-update| CS
+        GW -->|Token Bucket Rate Limit| Redis[("Local Docker Redis")]
+        CS -->|JDBC / JPA Transactions| DB[("Neon PostgreSQL")]
+        CS -->|Publish Ingestion Event| QStash["Upstash QStash Queue"]
+        QStash -->|Deliver Async Webhook| AI
+        AI -->|Multimodal Gemini LLM| Gemini["Google Gemini 3.5 Flash"]
+        AI -->|PUT Callback /ai-update| CS
     end
 ```
 
-### End-to-End Async AI Parsing Flow
+---
 
-1. **Upload Request**: NGO submits a problem statement with a document URL to `core-service` via Gateway (`POST /api/v1/core/problem-statements`).
-2. **Instant Persistence**: `core-service` saves the record in Neon PostgreSQL with status `PROCESSING` and returns HTTP `201 Created` immediately.
-3. **Queue Publishing**: `core-service` publishes a background task payload to Upstash QStash HTTP queue.
-4. **Async Webhook Trigger**: QStash executes an asynchronous HTTP POST webhook request to `ai-service` (`POST /api/v1/ai/webhook`).
-5. **AI Extraction**: `ai-service` uses Spring AI `ChatClient` with Google Gemini 3.5 Flash to extract title, description, domain, and tags.
-6. **Callback Update**: `ai-service` calls back `core-service` (`PUT /api/v1/core/problem-statements/{id}/ai-update`) to update the record status to `OPEN`.
+## 2. Microservice Matrix
+
+| Service Name | Port | Primary Responsibilities | Core Technologies |
+| :--- | :--- | :--- | :--- |
+| **`eureka-server`** | `8761` | Dynamic service registration, instance health tracking, and phonebook directory. | Spring Cloud Netflix Eureka |
+| **`gateway-service`** | `8080` | Single public entry point, route predicates (`lb://`), Redis rate limiting, and CORS security. | Spring Cloud Gateway, Redis 7 |
+| **`core-service`** | `8081` | Authentication, domain entities, project application state machine, application chat threads, Flyway migrations. | Spring Boot 4, Spring Security, Neon PostgreSQL, Flyway |
+| **`ai-service`** | `8082` | Multimodal document parsing (PDFs, notes), domain structuring, regional language translation, and callback updates. | Spring AI 2.0.0, Google Gemini 3.5 Flash, Upstash QStash |
 
 ---
 
-## 5. Architectural Choices Explained (Plain Language)
+## 3. End-to-End Asynchronous Ingestion Data Flow
 
-1. **Why Microservices over a Monolith?**
-   - AI document processing and Gemini LLM calls take several seconds and are CPU/memory intensive. By isolating AI processing in `ai-service`, heavy processing spikes never slow down user logins, messaging, or browsing in `core-service`.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant NGO as NGO Frontend
+    participant GW as gateway-service (:8080)
+    participant Core as core-service (:8081)
+    participant DB as Neon PostgreSQL
+    participant QStash as Upstash QStash Queue
+    participant AI as ai-service (:8082)
+    participant Gemini as Google Gemini 3.5 Flash
 
-2. **Why Asynchronous Queue (QStash) for AI Tasks?**
-   - Synchronous HTTP requests timing out after 30 seconds lead to poor user experience. Offloading tasks to QStash guarantees execution retry resilience while giving the user instant UI response.
+    NGO->>GW: POST /api/v1/core/problem-statements (With Cloudinary URL)
+    GW->>Core: Forward to lb://core-service
+    Core->>DB: Save Problem Statement (status: PROCESSING)
+    Core->>QStash: Publish Task Payload
+    Core-->>NGO: HTTP 201 Created (Instant Response)
 
-3. **Why Local Redis Container for Rate Limiting?**
-   - Using a local Redis container in `docker-compose.yml` (`REDIS_HOST=redis-cache`) ensures low-latency token-bucket rate limiting without network latency overhead.
-
-4. **Why Centralized Master Environment Variables?**
-   - Consolidating all microservice secrets into a single root `.env` prevents credential drift and simplifies container orchestration via Docker Compose.
-
----
-
-## 6. Containerization & Orchestration
-
-The backend services are containerized via Docker and orchestrated using `docker-compose.yml`:
-
-```yaml
-version: '3.8'
-
-services:
-  eureka-server:   # Port 8761
-  redis-cache:     # Port 6379 (Redis 7 Alpine)
-  gateway-service: # Port 8080
-  core-service:    # Port 8081
-  ai-service:      # Port 8082
+    QStash->>AI: Deliver Webhook (POST /api/v1/ai/webhook)
+    AI-->>QStash: HTTP 200 OK (Acknowledge Receipt)
+    
+    Note over AI: Handoff to @Async Thread Pool
+    AI->>Gemini: Parse Document via Gemini 3.5 Flash Vision
+    Gemini-->>AI: Return Structured JSON (Title, Description, Domain)
+    AI->>Core: PUT /api/v1/core/problem-statements/{id}/ai-update
+    Core->>DB: Update Problem Statement (status: OPEN)
 ```
 
-All microservices share a virtual bridge network (`connecting-dots-network`) and inherit environment configuration from root `.env`.
+---
+
+## 4. Key Architectural Patterns & Decisions
+
+### 1. Edge Gateway & Reactive Rate Limiting
+All external request traffic enters through `gateway-service` on port `8080`. Downstream microservices (`8081`, `8082`) are isolated from direct external internet traffic. Redis token-bucket rate limiting enforces a limit of 10 requests per second with a burst capacity of 20 per client IP.
+
+### 2. Isolated Asynchronous AI Processing
+Document parsing and Gemini 3.5 Flash LLM calls take several seconds to execute. Placing AI extraction inside `ai-service` triggered via Upstash QStash webhooks ensures main user workflows (login, messaging, browsing) remain ultra-fast and unblocked.
+
+### 3. Application State Machine Integrity
+`core-service` enforces strict state transitions:
+* Accepting an application sets problem status to `IN_PROGRESS` and **automatically sets all other pending applications for that problem to `REJECTED`**.
+* If an accepted application is withdrawn or rejected, the problem status **reverts back to `OPEN`** if no other accepted application remains.
+* Contributors with `WITHDRAWN` or `REJECTED` applications can re-apply once the problem opens up again.
 
 ---
 
-## 7. How the Backend Fits into the Bigger Picture
+## 5. Service README Directory
 
-- **Frontend Integration**: Next.js 14 frontend communicates exclusively through `gateway-service` on port `8080`.
-- **Security & Authorization**: JWT tokens generated during login carry user roles (`ROLE_CONTRIBUTOR`, `ROLE_NGO`, `ROLE_ADMIN`). Public guest discovery endpoints are accessible without tokens (`permitAll()`), while write mutations enforce 401 Unauthorized for anonymous requests.
-- **Messaging Threads**: Application messages are isolated per `application_id`, enabling an NGO to converse separately with different assigned contributors across multiple problem statements.
+Detailed technical documentation for each microservice is maintained within its respective project folder:
 
----
-
-## 8. Key Engineering Challenges & Technical Solutions
-
-A detailed breakdown of system design decisions, edge-case solutions, and technical trade-offs across the microservices architecture is documented in the master guide:
-👉 **[ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md](../ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md)**
+* **Service Discovery**: 👉 [EUREKA_SERVER_README.md](eureka-server/EUREKA_SERVER_README.md)
+* **API Gateway**: 👉 [GATEWAY_SERVICE_README.md](gateway-service/GATEWAY_SERVICE_README.md)
+* **Core Business Service**: 👉 [CORE_SERVICE_README.md](core-service/CORE_SERVICE_README.md)
+* **AI Ingestion Worker**: 👉 [AI_SERVICE_README.md](ai-service/AI_SERVICE_README.md)

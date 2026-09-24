@@ -1,53 +1,98 @@
 # API Gateway Microservice (`gateway-service`)
 
-The `gateway-service` microservice is the single **Edge Entry Point** for all incoming external HTTP requests from the Next.js frontend or mobile clients. Built on non-blocking reactive Spring Cloud Gateway, it handles request routing, load balancing, CORS enforcement, and Redis rate limiting.
+The `gateway-service` microservice acts as the single **Edge Entry Point** for the Connecting Dots microservices architecture. Built on reactive, non-blocking Spring Cloud Gateway, it controls traffic entry, enforces rate limiting, handles CORS security, and dynamically routes client requests to backend services.
 
 ---
 
-## 1. Core Service Overview
+## 1. What is an API Gateway?
 
-- **Port:** `8080` (Primary Public Gateway Entry)
-- **Container Name:** `gateway-service`
-- **Primary Role:** Edge router, security shield, load balancer, and traffic rate limiter.
+In a microservices architecture, client applications (such as web frontends or mobile apps) require access to multiple backend services. Directly exposing every microservice to the internet creates security vulnerabilities, CORS complications, and client-side coupling.
+
+An **API Gateway** solves these challenges by acting as a reverse proxy and unified edge server.
+
+```mermaid
+graph TD
+    Client["Client Application / Frontend"] -->|Single HTTP Entry :8080| Gateway["API Gateway"]
+    
+    subgraph Edge Responsibilities
+        Gateway -->|1. CORS Policy Check| Cors["CORS Security"]
+        Gateway -->|2. Token Bucket Filter| RateLimit["Redis Rate Limiter"]
+        Gateway -->|3. Registry Lookup| Discovery["Eureka Service Discovery"]
+    end
+    
+    Gateway -->|Forward to lb://core-service| Core["core-service (:8081)"]
+    Gateway -->|Forward to lb://ai-service| AI["ai-service (:8082)"]
+```
+
+### Core Responsibilities of an API Gateway
+
+* **Unified Routing**: Exposes a single public IP and port, mapping incoming endpoint paths to internal microservices.
+* **Traffic Control & Rate Limiting**: Protects downstream microservices from traffic surges and Denial-of-Service (DoS) attacks by throttling request rates per IP.
+* **Security & CORS Enforcement**: Handles Cross-Origin Resource Sharing policies in one central place instead of duplicating headers across every microservice.
+* **Dynamic Load Balancing**: Queries service registries (like Eureka) to resolve logical service names (`lb://service-name`) into container IP addresses.
 
 ---
 
-## 2. Tech Stack & Dependencies
+## 2. Implementation in Connecting Dots V2
 
-- **Language & JDK:** Java 25
-- **Framework:** Spring Boot 4.0.7 (Spring WebFlux / Project Reactor)
-- **Gateway Engine:** Spring Cloud Gateway 2025.1.2
-- **Caching & Rate Limiting:** Spring Data Reactive Redis (`redis:7-alpine`)
-- **Discovery Client:** Spring Cloud Netflix Eureka Client
+In the Connecting Dots ecosystem, `gateway-service` runs as a high-throughput, non-blocking reactive server powered by **Spring Cloud Gateway** and **Project Reactor (Netty)** on port `8080`.
+
+> [!NOTE]
+> All incoming frontend requests from Next.js target port `8080`. External clients never communicate directly with `core-service` (`8081`) or `ai-service` (`8082`).
+
+### System Architecture Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as Next.js Frontend
+    participant GW as gateway-service (:8080)
+    participant Redis as Redis Container
+    participant Eureka as eureka-server (:8761)
+    participant Core as core-service (:8081)
+
+    Client->>GW: HTTP Request (e.g. POST /api/v1/core/auth/login)
+    GW->>GW: Check CORS Policy
+    GW->>Redis: Evaluate Rate Limit (IP Token Bucket)
+    Redis-->>GW: Allowed (Tokens Remaining)
+    GW->>Eureka: Lookup instance location for "core-service"
+    Eureka-->>GW: Return IP: http://core-service:8081
+    GW->>Core: Forward Request Payload
+    Core-->>GW: Return Response Data
+    GW-->>Client: HTTP 200 OK Response
+```
 
 ---
 
-## 3. Inputs, Outputs & Route Mappings
+## 3. Route Mapping Matrix
 
-| Client Request Path | Routing Target | Load Balancer Scheme | Service Responsible |
+The gateway maps incoming requests using path-based predicates and forwards them using Spring Cloud Eureka load balancer URIs (`lb://` scheme):
+
+| External Path Pattern | Logical Route URI | Target Microservice | Function |
 | :--- | :--- | :--- | :--- |
-| `POST /api/v1/core/auth/**` | `http://core-service:8081` | `lb://core-service` | Authentication (Login/Register) |
-| `GET /api/v1/core/problem-statements/**` | `http://core-service:8081` | `lb://core-service` | Problem Statement Discovery |
-| `POST /api/v1/core/applications/**` | `http://core-service:8081` | `lb://core-service` | Contributor Project Applications |
-| `POST /api/v1/ai/webhook` | `http://ai-service:8082` | `lb://ai-service` | Gemini AI Webhook Processing |
+| `/api/v1/core/auth/**` | `lb://core-service` | `core-service` | User Registration & JWT Login |
+| `/api/v1/core/problem-statements/**` | `lb://core-service` | `core-service` | Problem Statement Ingestion & Discovery |
+| `/api/v1/core/applications/**` | `lb://core-service` | `core-service` | Project Applications & 1-on-1 Chat Threads |
+| `/api/v1/core/profiles/**` | `lb://core-service` | `core-service` | NGO & Contributor Profile Management |
+| `/api/v1/core/admin/**` | `lb://core-service` | `core-service` | Admin Governance & Verification |
+| `/api/v1/ai/webhook` | `lb://ai-service` | `ai-service` | Asynchronous Gemini AI Webhook Processing |
 
 ---
 
-## 4. Working Logic Explained Simply
+## 4. Key Configurations & Rate Limiting
 
-1. **Client Request Entry**: All incoming traffic hits `gateway-service` on port `8080`.
-2. **CORS Inspection**: Global CORS policies defined in `application.yml` validate origin, headers, and HTTP methods (`GET`, `POST`, `PUT`, `DELETE`).
-3. **Redis Rate Limiting**: Requests pass through a reactive Redis Token-Bucket filter:
-   - **Replenish Rate:** 10 requests per second.
-   - **Burst Capacity:** 20 requests.
-   - **Key Resolver:** Client IP address (`#{@ipKeyResolver}`).
-4. **Dynamic Load Balancing**: The gateway queries `eureka-server` to resolve `lb://core-service` or `lb://ai-service` into an active container IP and forwards the request without blocking threads.
+### Reactive Redis Token-Bucket Rate Limiter
 
----
+`gateway-service` enforces rate limiting using Spring Data Reactive Redis. Requests are evaluated per client IP address.
 
-## 5. Key Annotations, Classes & Configuration
+* **Replenish Rate**: 10 requests per second.
+* **Burst Capacity**: 20 requests.
+* **Key Resolver**: Resolves client IP address (`#{@ipKeyResolver}`).
 
-### Rate Limiter Configuration (`GatewayConfig.java`)
+> [!IMPORTANT]
+> If a client exceeds the burst capacity threshold of 20 requests within a second, the gateway immediately returns `HTTP 429 Too Many Requests`, safeguarding backend microservices from resource exhaustion.
+
+#### IP Key Resolver Implementation (`GatewayConfig.java`)
 
 ```java
 @Configuration
@@ -63,10 +108,15 @@ public class GatewayConfig {
 }
 ```
 
-### Route & Redis Configuration (`application.yml`)
+#### Gateway Routing & Filter Configuration (`application.yml`)
 
 ```yaml
+server:
+  port: 8080
+
 spring:
+  application:
+    name: gateway-service
   cloud:
     gateway:
       routes:
@@ -80,11 +130,27 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@ipKeyResolver}"
+
+        - id: ai-service-route
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/v1/ai/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
 ```
 
 ---
 
-## 6. Key Engineering Challenges & Architectural Decisions
+## 5. Technical Specifications
 
-Edge gateway reactive design, Redis token-bucket rate limiting, and CORS security architecture are documented in the master guide:
-👉 **[ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md](../../ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md)**
+| Parameter | Specification |
+| :--- | :--- |
+| **Port** | `8080` |
+| **Runtime Environment** | Java 25 |
+| **Framework** | Spring Boot 4.0.7 / Spring Cloud Gateway |
+| **Reactor Engine** | Netty (Non-Blocking Reactive I/O) |
+| **Cache & Rate Limit Store** | Redis 7 Alpine |
+| **Discovery Client** | Spring Cloud Netflix Eureka Client |

@@ -1,38 +1,82 @@
 # Eureka Service Discovery Server (`eureka-server`)
 
-The `eureka-server` microservice acts as the centralized **Service Registry & Phonebook Directory** for the Connecting Dots ecosystem. It enables dynamic service discovery so microservices can communicate without hardcoding IP addresses or domain names.
+The `eureka-server` microservice functions as the centralized **Service Registry & Phonebook Directory** for the Connecting Dots microservices architecture. Powered by **Spring Cloud Netflix Eureka Server**, it enables dynamic microservice discovery, allowing services to locate and communicate with each other without hardcoded IP addresses or domain names.
 
 ---
 
-## 1. Core Service Overview
+## 1. What is Service Discovery & Eureka Server?
 
-- **Port:** `8761`
-- **Container Name:** `eureka-server`
-- **Dashboard URL:** `http://localhost:8761`
-- **Primary Role:** Registry server where `gateway-service`, `core-service`, and `ai-service` register their network locations upon startup.
+### The Challenge of Dynamic Environments
 
----
+In modern cloud and containerized environments (such as Docker Compose, Kubernetes, or Render), microservice instances are dynamic. Containers are frequently created, restarted, or auto-scaled, causing their IP addresses to change unpredictably.
 
-## 2. Tech Stack & Dependencies
+Hardcoding IP addresses or static URLs into microservice configuration files creates brittle architectures that break whenever a container restarts.
 
-- **Language & JDK:** Java 25
-- **Framework:** Spring Boot 4.0.7
-- **Cloud Extension:** Spring Cloud 2025.1.2 (Netflix Eureka Server)
-- **Build Tool:** Maven (`pom.xml`)
+### The Service Discovery Solution
 
-### Key Dependency
-```xml
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
-</dependency>
+A **Service Discovery Registry** acts as a dynamic directory:
+
+1. Every microservice registers its network location (IP address, port, service name) with the registry upon startup.
+2. Microservices query the registry to discover the real-time network location of other services.
+
+```mermaid
+graph TD
+    subgraph Eureka Registry (:8761)
+        Registry["Service Directory Table
+        ----------------------------------
+        core-service  -->  172.18.0.4:8081
+        ai-service    -->  172.18.0.5:8082
+        gateway-service -> 172.18.0.3:8080"]
+    end
+    
+    Core["core-service"] -->|1. Register & Send Heartbeat| Registry
+    AI["ai-service"] -->|1. Register & Send Heartbeat| Registry
+    Gateway["gateway-service"] -->|2. Query lb://core-service| Registry
+    Gateway -->|3. Route Request to 172.18.0.4:8081| Core
 ```
 
 ---
 
-## 3. Configuration & Working Logic
+## 2. Implementation in Connecting Dots V2
 
-### `application.yml`
+In Connecting Dots V2, `eureka-server` runs on port `8761` and hosts an interactive web dashboard at `http://localhost:8761`.
+
+> [!NOTE]
+> `eureka-server` is configured purely as a server registry node: it does not register with itself or fetch remote registries.
+
+### Service Registration & Lookup Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Eureka as eureka-server (:8761)
+    participant Core as core-service (:8081)
+    participant GW as gateway-service (:8080)
+
+    Eureka->>Eureka: 1. Bootstraps Registry Dashboard on :8761
+    Core->>Eureka: 2. Register: core-service @ 172.18.0.4:8081
+    loop Every 30 Seconds
+        Core->>Eureka: 3. Send Heartbeat Ping (Maintain Active Lease)
+    end
+    GW->>Eureka: 4. Resolve "lb://core-service"
+    Eureka-->>GW: 5. Return Active Instance (172.18.0.4:8081)
+    GW->>Core: 6. Forward HTTP Request directly
+```
+
+---
+
+## 3. Core Mechanics & Configuration
+
+### Key Concepts
+
+* **`@EnableEurekaServer`**: Annotation on `EurekaServerApplication.java` that initializes the Netflix Eureka Server endpoints and dashboard UI.
+* **Heartbeat Pings**: Microservices send heartbeat pings every 30 seconds to maintain an active lease in the registry.
+* **Lease Eviction**: If a service fails to send a heartbeat within 90 seconds, Eureka marks the lease expired and removes the instance from the directory.
+* **Self-Preservation Mode**: A safety mechanism where Eureka temporarily halts instance evictions if a sudden network outage prevents multiple instances from reaching the server, protecting against cascading failures.
+
+---
+
+## 4. Configuration Details (`application.yml`)
 
 ```yaml
 server:
@@ -44,30 +88,22 @@ spring:
 
 eureka:
   client:
-    register-with-eureka: false  # Server does not register with itself
-    fetch-registry: false        # Server does not need to fetch registry from another node
+    register-with-eureka: false  # Registry server does not register as a client to itself
+    fetch-registry: false        # Registry server does not need to fetch remote registries
   server:
     wait-time-in-ms-when-sync-empty: 0
 ```
 
-### How Service Discovery Works Step-by-Step
-
-1. **Bootstrapping**: `eureka-server` starts up on port `8761` and initializes the registry dashboard.
-2. **Registration**: When `core-service` or `ai-service` boots, its Eureka Client sends an HTTP `POST` to `http://eureka-server:8761/eureka/apps/{SERVICE_NAME}` registering its IP and port.
-3. **Heartbeat Monitoring**: Registered microservices send ping heartbeats every 30 seconds to maintain an active lease.
-4. **Dynamic Routing**: When a client request hits `gateway-service`, the gateway queries Eureka to dynamically resolve `lb://core-service` or `lb://ai-service` to an active container address.
-
 ---
 
-## 4. Key Annotations & Concepts
+## 5. Technical Specifications
 
-- **`@EnableEurekaServer`**: Placed on `EurekaServerApplication.java`. Tells Spring Boot to configure and start Netflix Eureka Server endpoints and UI dashboard.
-- **Heartbeat & Lease Expiration**: If a service fails to send a heartbeat within the eviction threshold (default 90 seconds), Eureka removes it from the registry.
-- **Self-Preservation Mode**: A safety mechanism where Eureka stops evicting instances if a network partition causes sudden loss of heartbeats across multiple services.
-
----
-
-## 5. Key Engineering Challenges & Architectural Decisions
-
-Service discovery design decisions, client-side load balancing, and failure modes are documented in the master guide:
-👉 **[ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md](../../ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md)**
+| Parameter | Specification |
+| :--- | :--- |
+| **Port** | `8761` |
+| **Dashboard URL** | `http://localhost:8761` |
+| **Runtime Environment** | Java 25 |
+| **Framework** | Spring Boot 4.0.7 / Spring Cloud 2025.1.2 |
+| **Discovery Engine** | Spring Cloud Netflix Eureka Server |
+| **Heartbeat Frequency** | 30 Seconds |
+| **Lease Expiration Threshold** | 90 Seconds |
