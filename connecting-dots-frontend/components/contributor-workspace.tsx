@@ -282,14 +282,16 @@ export default function ContributorWorkspace() {
                       <div className="tag-row" style={{ marginTop: '0.75rem', marginBottom: '1rem' }}>
                         <span>#{p.domain}</span>
                       </div>
-                      <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{p.ngoProfile?.organizationName || 'Connecting Dots NGO'}</span>
+                      <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--brand-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '62%' }}>
+                          {p.ngoProfile?.organizationName || 'Connecting Dots NGO'}
+                        </span>
                         {appliedIds.has(p.id) ? (
-                          <span className="published-note" style={{ color: '#22c55e', fontWeight: 600 }}>Applied ✓</span>
+                          <span className="published-note" style={{ color: '#22c55e', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.82rem' }}>Applied ✓</span>
                         ) : (
                           <button
                             className="primary-button"
-                            style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem' }}
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.82rem', whiteSpace: 'nowrap', flexShrink: 0, gap: '6px', cursor: 'pointer' }}
                             onClick={(e) => {
                               e.stopPropagation()
                               applyToProblem(p.id)
@@ -370,9 +372,9 @@ export default function ContributorWorkspace() {
             <span>Preferred language</span>
             <strong>{profile?.preferredLanguage?.toUpperCase() || 'EN'}</strong>
           </div>
-          <div className="reputation-line">
-            <span>Location</span>
-            <strong>{profile?.location || 'Community Member'}</strong>
+          <div className="reputation-line" style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center' }}>
+            <span style={{ flexShrink: 0 }}>Location</span>
+            <strong style={{ textAlign: 'right', wordBreak: 'break-word', fontSize: '0.82rem', lineHeight: '1.3' }}>{profile?.location || 'Community Member'}</strong>
           </div>
           <a className="text-link" href={profile?.id ? `/profile/contributor/${profile.id}` : "/profile"} style={{ marginTop: '1rem', display: 'inline-block' }}>
             View public profile →
