@@ -24,6 +24,7 @@ import org.springframework.data.jpa.domain.Specification;
 import com.connectingdots.core_service.repository.ProblemStatementSpecs;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
