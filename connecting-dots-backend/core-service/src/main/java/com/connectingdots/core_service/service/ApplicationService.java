@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -60,7 +61,7 @@ public class ApplicationService {
 
         if (existingOpt.isPresent()) {
             Application existing = existingOpt.get();
-            if ("WITHDRAWN".equalsIgnoreCase(existing.getStatus())) {
+            if ("WITHDRAWN".equalsIgnoreCase(existing.getStatus()) || "REJECTED".equalsIgnoreCase(existing.getStatus())) {
                 existing.setStatus("PENDING");
                 return applicationRepository.save(existing);
             } else {

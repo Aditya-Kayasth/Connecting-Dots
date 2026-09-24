@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -12,6 +13,6 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     List<Application> findByContributorProfileId(UUID contributorProfileId);
     List<Application> findByProblemId(UUID problemId);
     boolean existsByProblemIdAndContributorProfileId(UUID problemId, UUID contributorProfileId);
-    java.util.Optional<Application> findByProblemIdAndContributorProfileId(UUID problemId, UUID contributorProfileId);
+    Optional<Application> findByProblemIdAndContributorProfileId(UUID problemId, UUID contributorProfileId);
     void deleteByProblemId(UUID problemId);
 }
