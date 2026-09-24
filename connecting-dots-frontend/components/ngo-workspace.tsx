@@ -777,7 +777,7 @@ export default function NgoWorkspace() {
               const domain = (target.elements.namedItem('domain') as HTMLSelectElement).value;
               
               try {
-                await apiRequest(`/api/v1/core/problem-statements/${reviewingDraft.id}/ai-update`, {
+                await apiRequest(`/api/v1/core/problem-statements/${reviewingDraft.id}`, {
                   method: 'PUT',
                   body: { title, description, domain, status: 'OPEN' }
                 });
