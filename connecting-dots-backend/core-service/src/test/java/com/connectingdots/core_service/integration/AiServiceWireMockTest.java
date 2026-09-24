@@ -7,6 +7,7 @@ import com.connectingdots.core_service.repository.ProblemStatementRepository;
 import com.connectingdots.core_service.repository.UserRepository;
 import com.connectingdots.core_service.service.ProblemStatementService;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +47,7 @@ class AiServiceWireMockTest {
 
     @BeforeAll
     static void startWireMock() {
-        wireMockServer = new WireMockServer(8082);
+        wireMockServer = new WireMockServer(options().dynamicPort());
         wireMockServer.start();
     }
 
@@ -62,7 +63,7 @@ class AiServiceWireMockTest {
         wireMockServer.resetAll();
         // @InjectMocks creates the service without Spring context, so @Value fields are null.
         // ReflectionTestUtils injects the WireMock server URL directly into the aiServiceUrl field.
-        ReflectionTestUtils.setField(problemStatementService, "aiServiceUrl", "http://localhost:8082");
+        ReflectionTestUtils.setField(problemStatementService, "aiServiceUrl", "http://localhost:" + wireMockServer.port());
     }
 
     @Test

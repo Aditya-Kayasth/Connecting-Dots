@@ -38,6 +38,7 @@ class MessageServiceTest {
     @Mock private ProblemStatementRepository problemStatementRepository;
     @Mock private ContributorProfileRepository contributorProfileRepository;
     @Mock private UserRepository userRepository;
+    @Mock private DemoAccountGuard demoAccountGuard;
 
     @InjectMocks private MessageService messageService;
 

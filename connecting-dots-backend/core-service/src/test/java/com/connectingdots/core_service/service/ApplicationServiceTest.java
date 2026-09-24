@@ -1,8 +1,10 @@
 package com.connectingdots.core_service.service;
 
 import com.connectingdots.core_service.dto.ApplicationRequest;
+import com.connectingdots.core_service.dto.ApplicationStatusUpdateRequest;
 import com.connectingdots.core_service.entity.Application;
 import com.connectingdots.core_service.entity.ContributorProfile;
+import com.connectingdots.core_service.entity.NgoProfile;
 import com.connectingdots.core_service.entity.ProblemStatement;
 import com.connectingdots.core_service.entity.User;
 import com.connectingdots.core_service.repository.ApplicationRepository;
@@ -21,6 +23,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,6 +40,7 @@ class ApplicationServiceTest {
     @Mock private ContributorProfileRepository contributorProfileRepository;
     @Mock private NgoProfileRepository ngoProfileRepository;
     @Mock private UserRepository userRepository;
+    @Mock private DemoAccountGuard demoAccountGuard;
 
     @InjectMocks private ApplicationService applicationService;
 
@@ -83,7 +87,7 @@ class ApplicationServiceTest {
         when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
         when(contributorProfileRepository.findById(contributorProfileId)).thenReturn(Optional.of(mockProfile));
         when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
-        when(applicationRepository.existsByProblemIdAndContributorProfileId(problemId, contributorProfileId)).thenReturn(false);
+        when(applicationRepository.findByProblemIdAndContributorProfileId(problemId, contributorProfileId)).thenReturn(Optional.empty());
         
         Application savedApplication = new Application();
         savedApplication.setId(UUID.randomUUID());
@@ -122,13 +126,44 @@ class ApplicationServiceTest {
         problemStatement.setId(problemId);
         problemStatement.setStatus(ProblemStatement.Status.OPEN);
 
+        Application existingApp = new Application();
+        existingApp.setStatus("PENDING");
+
         when(contributorProfileRepository.findById(contributorProfileId)).thenReturn(Optional.of(mockProfile));
         when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
         when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
-        when(applicationRepository.existsByProblemIdAndContributorProfileId(problemId, contributorProfileId)).thenReturn(true);
+        when(applicationRepository.findByProblemIdAndContributorProfileId(problemId, contributorProfileId)).thenReturn(Optional.of(existingApp));
 
         assertThrows(IllegalStateException.class, () -> applicationService.applyToProblem(request));
         verify(applicationRepository, never()).save(any(Application.class));
+    }
+
+    @Test
+    void applyToProblem_ReapplyWithdrawnSuccess() {
+        UUID problemId = UUID.randomUUID();
+        ApplicationRequest request = new ApplicationRequest(problemId, contributorProfileId);
+
+        ProblemStatement problemStatement = new ProblemStatement();
+        problemStatement.setId(problemId);
+        problemStatement.setStatus(ProblemStatement.Status.OPEN);
+
+        Application withdrawnApp = new Application();
+        withdrawnApp.setId(UUID.randomUUID());
+        withdrawnApp.setProblemId(problemId);
+        withdrawnApp.setContributorProfileId(contributorProfileId);
+        withdrawnApp.setStatus("WITHDRAWN");
+
+        when(contributorProfileRepository.findById(contributorProfileId)).thenReturn(Optional.of(mockProfile));
+        when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
+        when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problemStatement));
+        when(applicationRepository.findByProblemIdAndContributorProfileId(problemId, contributorProfileId)).thenReturn(Optional.of(withdrawnApp));
+        when(applicationRepository.save(any(Application.class))).thenAnswer(i -> i.getArgument(0));
+
+        Application result = applicationService.applyToProblem(request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo("PENDING");
+        verify(applicationRepository, times(1)).save(withdrawnApp);
     }
 
     @Test
@@ -146,5 +181,81 @@ class ApplicationServiceTest {
 
         assertThrows(IllegalStateException.class, () -> applicationService.applyToProblem(request));
         verify(applicationRepository, never()).save(any(Application.class));
+    }
+
+    @Test
+    void updateApplicationStatus_AcceptApplication_AutoRejectsOthersAndSetsInProgress() {
+        UUID problemId = UUID.randomUUID();
+        UUID app1Id = UUID.randomUUID();
+        UUID app2Id = UUID.randomUUID();
+
+        ProblemStatement problem = new ProblemStatement();
+        problem.setId(problemId);
+        problem.setStatus(ProblemStatement.Status.OPEN);
+
+        User ngoUser = User.builder().email("ngo@test.com").role(User.Role.NGO).build();
+        ngoUser.setId(callerUserId);
+
+        NgoProfile ngoProfile = NgoProfile.builder().user(ngoUser).build();
+        problem.setNgoProfile(ngoProfile);
+
+        Application app1 = new Application();
+        app1.setId(app1Id);
+        app1.setProblemId(problemId);
+        app1.setStatus("PENDING");
+
+        Application app2 = new Application();
+        app2.setId(app2Id);
+        app2.setProblemId(problemId);
+        app2.setStatus("PENDING");
+
+        when(applicationRepository.findById(app1Id)).thenReturn(Optional.of(app1));
+        when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problem));
+        when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(ngoUser));
+        when(userRepository.findById(callerUserId)).thenReturn(Optional.of(ngoUser));
+        when(applicationRepository.save(any(Application.class))).thenAnswer(i -> i.getArgument(0));
+        when(applicationRepository.findByProblemId(problemId)).thenReturn(List.of(app1, app2));
+
+        ApplicationStatusUpdateRequest updateReq = new ApplicationStatusUpdateRequest("ACCEPTED");
+        Application result = applicationService.updateApplicationStatus(app1Id, updateReq, null);
+
+        assertThat(result.getStatus()).isEqualTo("ACCEPTED");
+        assertThat(problem.getStatus()).isEqualTo(ProblemStatement.Status.IN_PROGRESS);
+        assertThat(app2.getStatus()).isEqualTo("REJECTED");
+        verify(problemStatementRepository, times(1)).save(problem);
+    }
+
+    @Test
+    void updateApplicationStatus_WithdrawAcceptedApplication_RevertsPsToOpen() {
+        UUID problemId = UUID.randomUUID();
+        UUID app1Id = UUID.randomUUID();
+
+        ProblemStatement problem = new ProblemStatement();
+        problem.setId(problemId);
+        problem.setStatus(ProblemStatement.Status.IN_PROGRESS);
+
+        User ngoUser = User.builder().email("ngo@test.com").role(User.Role.NGO).build();
+        ngoUser.setId(callerUserId);
+        NgoProfile ngoProfile = NgoProfile.builder().user(ngoUser).build();
+        problem.setNgoProfile(ngoProfile);
+
+        Application app1 = new Application();
+        app1.setId(app1Id);
+        app1.setProblemId(problemId);
+        app1.setStatus("ACCEPTED");
+
+        when(applicationRepository.findById(app1Id)).thenReturn(Optional.of(app1));
+        when(problemStatementRepository.findById(problemId)).thenReturn(Optional.of(problem));
+        when(userRepository.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(ngoUser));
+        when(userRepository.findById(callerUserId)).thenReturn(Optional.of(ngoUser));
+        when(applicationRepository.save(any(Application.class))).thenAnswer(i -> i.getArgument(0));
+        when(applicationRepository.findByProblemId(problemId)).thenReturn(List.of(app1));
+
+        ApplicationStatusUpdateRequest updateReq = new ApplicationStatusUpdateRequest("WITHDRAWN");
+        Application result = applicationService.updateApplicationStatus(app1Id, updateReq, null);
+
+        assertThat(result.getStatus()).isEqualTo("WITHDRAWN");
+        assertThat(problem.getStatus()).isEqualTo(ProblemStatement.Status.OPEN);
+        verify(problemStatementRepository, times(1)).save(problem);
     }
 }

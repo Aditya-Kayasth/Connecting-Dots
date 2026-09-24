@@ -41,6 +41,9 @@ public class ProblemStatementServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private DemoAccountGuard demoAccountGuard;
+
     @InjectMocks
     private ProblemStatementService problemStatementService;
 
