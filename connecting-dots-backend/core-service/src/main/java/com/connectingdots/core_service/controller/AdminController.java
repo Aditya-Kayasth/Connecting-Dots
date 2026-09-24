@@ -25,6 +25,7 @@ public class AdminController {
     private final ApplicationRepository applicationRepository;
     private final NgoProfileRepository ngoProfileRepository;
     private final ContributorProfileRepository contributorProfileRepository;
+    private final com.connectingdots.core_service.service.ProblemStatementService problemStatementService;
     private final com.connectingdots.core_service.service.DemoAccountGuard demoAccountGuard;
 
     @Data
@@ -119,11 +120,8 @@ public class AdminController {
     @DeleteMapping("/problems/{id}")
     public ResponseEntity<Void> deleteProblemStatement(@PathVariable UUID id) {
         checkCallerNotDemoAdmin();
-        if (problemStatementRepository.existsById(id)) {
-            problemStatementRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        problemStatementService.deleteProblemStatement(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/ngos")

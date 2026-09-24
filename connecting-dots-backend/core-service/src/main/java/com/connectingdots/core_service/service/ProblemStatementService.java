@@ -35,6 +35,7 @@ public class ProblemStatementService {
     private final ContributorProfileRepository contributorProfileRepository;
     private final UserRepository userRepository;
     private final com.connectingdots.core_service.repository.ApplicationRepository applicationRepository;
+    private final com.connectingdots.core_service.repository.MessageRepository messageRepository;
     private final QStashService qStashService;
     private final DemoAccountGuard demoAccountGuard;
 
@@ -291,7 +292,11 @@ public class ProblemStatementService {
             }
         }
 
-        // Delete associated applications first
+        // Delete associated application messages & applications first
+        List<com.connectingdots.core_service.entity.Application> apps = applicationRepository.findByProblemId(id);
+        for (com.connectingdots.core_service.entity.Application app : apps) {
+            messageRepository.deleteByApplicationId(app.getId());
+        }
         applicationRepository.deleteByProblemId(id);
         problemStatementRepository.delete(problem);
     }
