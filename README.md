@@ -9,157 +9,154 @@
 ![Redis](https://img.shields.io/badge/Redis_7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Google Gemini](https://img.shields.io/badge/Gemini_3.5_Flash-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4.3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
 ---
 
-## Overview
-
-**Connecting Dots V2** is an enterprise-grade, microservices-driven civic tech matching platform that connects Non-Governmental Organizations (NGOs) with technical volunteer contributors (software engineers, data scientists, UX designers).
-
-The platform addresses a major industry bottleneck: NGOs often struggle to articulate technical specifications from raw problem descriptions. Connecting Dots solves this by allowing NGOs to upload handwritten paper notes, printed PDFs, or voice recordings in **any language**. An asynchronous AI processing pipeline powered by **Google Gemini 3.5 Flash Vision** transcribes, translates, and structures raw uploads into actionable engineering briefs.
+> [!IMPORTANT]
+> ### ☁️ Live Cloud Hosting & Cold-Start Disclaimer
+> 
+> * **Frontend Deployment**: Hosted on **Vercel**.
+> * **Backend Microservices Deployment**: Hosted on **Render** (Free Tier).
+> 
+> **Cold-Start Notice**: Free-tier cloud microservices on Render automatically spin down after 15 minutes of inactivity. When visiting the live application for the first time or after a period of inactivity, initial API requests may take **30 to 60 seconds** while backend containers complete their boot sequence.
+> 
+> The application includes a live status banner (`BackendStatusBanner`) that monitors service connection states. **Please wait for all microservices to finish warming up before logging in or submitting forms.**
 
 ---
 
-## Executive Architecture
+## 🌐 1. Platform Overview
 
-The system is architected around a **decoupled 4-microservice backend** paired with an **AI-prompt-engineered Next.js 16 frontend**:
+**Connecting Dots V2** is an enterprise-grade, microservices-driven civic technology platform engineered to match Non-Governmental Organizations (NGOs) with technical volunteer contributors (software engineers, data scientists, UX designers).
 
+### The Core Problem & AI Solution
+
+Grassroots NGOs frequently struggle to translate real-world community needs into structured technical project briefs. Connecting Dots solves this by enabling NGOs to upload raw field notes, paper photographs, PDFs, or audio recordings in **any language**.
+
+An asynchronous AI processing pipeline powered by **Google Gemini 3.5 Flash** transcribes, translates, and structures raw uploads into actionable engineering problem statements exposed on a public marketplace for technical contributors.
+
+---
+
+## 🏛️ 2. Microservices System Architecture
+
+The platform is architected around a **decoupled 4-microservice backend** paired with a **Next.js 16 App Router frontend**:
+
+```mermaid
+flowchart TD
+    Client["Connecting Dots Frontend (Vercel / Next.js 16)"] -->|HTTP REST / JWT Bearer| GW["1. API Gateway (gateway-service:8080)"]
+
+    subgraph ServiceDiscoveryMesh["Service Discovery Mesh"]
+        Eureka["Eureka Registry (eureka-server:8761)"]
+        GW <-->|Dynamic Lookup| Eureka
+        GW -->|lb://core-service| Core["2. Core Business Service (core-service:8081)"]
+        GW -->|lb://ai-service| AI["3. Gemini AI Worker (ai-service:8082)"]
+        Core <-->|Heartbeat| Eureka
+        AI <-->|Heartbeat| Eureka
+    end
+
+    subgraph DataAsyncTier["Data & Async Tier"]
+        GW -->|Token Bucket Rate Limit| Redis[("Local Docker Redis")]
+        Core -->|JPA Transactions| DB[("Neon Serverless PostgreSQL")]
+        Core -->|Publish Ingestion Task| QStash["Upstash QStash Queue"]
+        QStash -->|Async Webhook| AI
+        AI -->|Multimodal Gemini LLM| Gemini["Google Gemini 3.5 Flash"]
+        AI -->|PUT Callback /ai-update| Core
+    end
 ```
-                              ┌───────────────────────────────────┐
-                              │  Connecting Dots Next.js 16 UI    │
-                              └─────────────────┬─────────────────┘
-                                                │ (HTTP / Bearer JWT)
-                                                ▼
-                              ┌───────────────────────────────────┐
-                              │    Spring Cloud Gateway (8080)    │
-                              │   Redis Token-Bucket Rate Limiter │
-                              └─────────┬───────────────┬─────────┘
-                                        │               │
-                      ┌─────────────────┘               └─────────────────┐
-                      ▼                                                   ▼
-┌───────────────────────────────────────────┐       ┌───────────────────────────────────────────┐
-│           core-service (8081)             │       │            ai-service (8082)              │
-│  - User Auth & RBAC (JWT / BCrypt)        │       │  - Google Gemini 3.5 Flash Vision         │
-│  - Neon PostgreSQL & Flyway Migrations    │       │  - Multimodal OCR & Translation           │
-│  - Problem & Application State Machine    │       │  - Spring AI 2.0.0 Structured Output      │
-└─────────────────────┬─────────────────────┘       └─────────────────────▲─────────────────────┘
-                      │                                                   │
-                      │ 1. Publish Event                                  │ 2. Webhook Delivery
-                      ▼                                                   │
-          ┌───────────────────────┐                                       │
-          │ Upstash QStash Queue  ├───────────────────────────────────────┘
-          └───────────────────────┘
-```
 
 ---
 
-## AI-Native Front-End Engineering & Prompting Velocity
+## 📊 3. Microservice Architecture Matrix
 
-A key engineering highlight of this repository is the **rapid design and implementation of the complete frontend architecture using Advanced Generative AI Prompt Engineering**.
+Detailed technical documentation for each component is available in its respective folder:
 
-### The 5-Prompt v0 Mini Execution Strategy
-Rather than building components manually over weeks, the entire production-ready user interface was specified, prototyped, and generated in **just 5 structured prompts using v0 Mini by Vercel**:
-
-1. **Prompt 1 (Foundation & Auth)**: Established the root layout shell, persisted dark/light themes (`next-themes`), civic-tech design system, and dynamic role-switching authentication modals.
-2. **Prompt 2 (Guest Discovery)**: Built the public problem feed, domain filtering, NGO directory grid, and contributor directory grid with guest onboarding isolation.
-3. **Prompt 3 (NGO Workspace)**: Built the problem submission pipeline, file attachment placeholders, and the AI review queue (`PROCESSING` → `DRAFT` → `OPEN`).
-4. **Prompt 4 (Contributor Workspace & Messaging)**: Built the application tracking engine, role-gated apply interactions, and isolated 1-on-1 application message threads with polling synchronization.
-5. **Prompt 5 (Reviews & Governance)**: Built the 1–5 star rating engine, public profile review lists, and the executive Admin Operations Center.
-
-Following v0 code generation, the frontend was extracted and integrated with the live backend using agentic AI pair programming (Google Antigravity), demonstrating state-of-the-art developer velocity and generative AI workflow orchestration.
-
----
-
-## Verified Exact Tech Stack & Versions
-
-| Layer | Component | Version in Source Code | Purpose |
+| Component / Service | Port | Primary Responsibilities | Detailed Documentation |
 | :--- | :--- | :--- | :--- |
-| **Frontend** | **Next.js** | `16.3.3` | App Router, Turbopack, Standalone Docker Runner |
-| **Frontend** | **React** | `19.0` | UI Library |
-| **Frontend** | **TypeScript** | `5.7.3` | Static Type Safety |
-| **Frontend** | **Tailwind CSS** | `4.3.3` | Utility-First Styling System |
-| **Backend** | **Java** | `25` | Modern JDK Runtime |
-| **Backend** | **Spring Boot** | `4.0.7` | Microservices Core Framework |
-| **Backend** | **Spring Cloud** | `2025.1.2` | Eureka Service Registry & Spring Cloud Gateway |
-| **Backend** | **Spring AI** | `2.0.0` | Spring AI Model Integration Framework |
-| **AI Ingestion** | **Google GenAI SDK** | `1.67.0` | Multimodal Vision & Gemini LLM API Client |
-| **AI Model** | **Gemini Model** | `gemini-3.5-flash` | Multimodal OCR, Translation & JSON Structuring |
-| **Database** | **PostgreSQL** | `Neon Serverless` | Relational Persistence & Flyway Migrations |
-| **Cache & Security** | **Redis** | `7-alpine` | Token-Bucket Rate Limiter & Session Store |
-| **Queue** | **Upstash QStash** | `Serverless HTTP` | Asynchronous Queue & Exponential Retry Engine |
+| **`connecting-dots-frontend`** | `3000` | Next.js 16 App Router, React 19 UI, Tailwind CSS v4, dynamic status banner. | 👉 [Frontend README](connecting-dots-frontend/README.md) |
+| **`gateway-service`** | `8080` | Edge entry point, route predicates (`lb://`), Redis rate limiting, CORS policy. | 👉 [Gateway README](connecting-dots-backend/gateway-service/GATEWAY_SERVICE_README.md) |
+| **`core-service`** | `8081` | Auth (JWT/BCrypt), NGO & Contributor profiles, application state machine, messaging threads. | 👉 [Core Service README](connecting-dots-backend/core-service/CORE_SERVICE_README.md) |
+| **`ai-service`** | `8082` | Multimodal document extraction, Gemini 3.5 Flash LLM, async QStash webhook processing. | 👉 [AI Service README](connecting-dots-backend/ai-service/AI_SERVICE_README.md) |
+| **`eureka-server`** | `8761` | Netflix Eureka dynamic service discovery registry & instance health directory. | 👉 [Eureka README](connecting-dots-backend/eureka-server/EUREKA_SERVER_README.md) |
 
 ---
 
-## Core System Features
-
-### 1. Multimodal AI Problem Ingestion
-NGOs submit problem statements via text, PDF documents, or handwritten notes/photos in any language. `core-service` generates a signed Cloudinary signature, uploads the source material, and publishes an asynchronous task to Upstash QStash. QStash triggers `ai-service`, where Gemini 3.5 Flash transcribes the input, translates regional languages, extracts key requirements, and updates `core-service` via a secure callback.
-
-### 2. Guest Exploration vs. Role-Gated Mutations
-Guests can explore problem statements, NGO directories, and contributor profiles read-only. Mutation operations (`POST`, `PUT`, `DELETE`) enforce stateless JWT authentication with role-based access control (`ROLE_ADMIN`, `ROLE_NGO`, `ROLE_CONTRIBUTOR`).
-
-### 3. Isolated 1-on-1 Application Messaging
-When a contributor applies to an NGO project, a private messaging thread is bound to that exact `application_id`. A 5-second polling mechanism fetches messages securely (`/api/v1/core/applications/{id}/messages`), isolating chat threads between the NGO owner and applicant.
-
-### 4. Admin Operations & Governance Center
-Accessible exclusively to authorized administrator accounts (`admin@connectingdots.org`), featuring live platform statistics, NGO verification management (`isVerified` status toggle), user moderation, and problem content auditing.
-
-### 5. Backend Cold-Start Resilience
-For cloud deployments on free-tier hosting (e.g., Render), the frontend includes a `BackendStatusBanner` component that pings backend health and alerts users if a cold-start boot sequence (~30–60 seconds) is in progress.
-
----
-
-## Getting Started
+## 🚀 4. Local Quickstart & Development Guide
 
 ### Prerequisites
-* **Docker** & **Docker Compose** installed on your system.
-* **Node.js** v20+ (for standalone frontend development).
 
-### 1. Full-Stack Local Run (Single Command)
-Run the entire platform (Frontend + Gateway + Core + AI + Eureka + Redis) using Docker Compose:
+* **Docker** & **Docker Compose** installed on your system.
+* **Node.js** v20+ & **Java 25 JDK** (for standalone local development).
+
+---
+
+### Option A: Full-Stack Local Execution (Docker Compose)
+
+To build and run all services (Frontend, Gateway, Core, AI, Eureka, Redis) in unified Docker containers:
 
 ```bash
 docker compose up --build
 ```
 
-Access points:
-* **Frontend**: `http://localhost:3000`
+#### Access Points
+
+* **Next.js Frontend**: `http://localhost:3000`
 * **API Gateway**: `http://localhost:8080`
-* **Eureka Registry**: `http://localhost:8761`
-
-### 2. Seeded Credentials
-
-| Role | Email | Password | Access Level |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin@connectingdots.org` | `Admin@1234` | Platform Governance & Verification |
-| **NGO** | `ngo_test@connectingdots.org` | `Ngo@1234` | Problem Submission & Matching |
-| **Contributor** | `contributor_test@connectingdots.org` | `Contributor@1234` | Applications & Messaging |
+* **Eureka Registry Dashboard**: `http://localhost:8761`
 
 ---
 
-## Project Structure
+### Option B: Local PowerShell Management Scripts (Windows)
+
+For rapid local testing on Windows systems using PowerShell:
+
+#### Start All Local Services
+```powershell
+.\start-system.ps1
+```
+
+#### Stop All Local Services
+```powershell
+.\stop-system.ps1
+```
+
+---
+
+## 🔑 5. Seeded Demo Accounts
+
+The database includes pre-seeded accounts for instant platform testing:
+
+| Role | Email | Password | Permissions & Features |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@connectingdots.org` | `Admin@1234` | Platform Governance, NGO Verification & Metrics |
+| **NGO** | `ngo_test@connectingdots.org` | `Ngo@1234` | Problem Creation, AI Document Ingestion & Matching |
+| **Contributor** | `contributor_test@connectingdots.org` | `Contributor@1234` | Project Exploration, Applying & 1-on-1 Messaging |
+
+---
+
+## 📁 6. Streamlined Repository Structure
 
 ```
 Connecting-Dots-V2/
-├── connecting-dots-frontend/      # Next.js 16 App Router Frontend (v0 AI Generated)
-│   ├── app/                      # Next.js Pages & Routes (admin, ngo, contributor, profile)
-│   ├── components/               # Civic-tech UI Components & Status Banners
-│   ├── lib/                      # Centralized API Client & Cloudinary Upload Helper
-│   └── Dockerfile                # Multi-stage Standalone Node.js Runner
+├── connecting-dots-frontend/            # Next.js 16 Frontend App Router
+│   ├── app/                            # App Routes (admin, ngo, contributor, profile)
+│   ├── components/                     # Civic-Tech UI Components & Status Banner
+│   ├── lib/                            # Bearer Token API Client & Upload Helpers
+│   └── README.md                       # Detailed Frontend Documentation
 ├── connecting-dots-backend/
-│   ├── eureka-server/            # Spring Cloud Eureka Service Registry (8761)
-│   ├── gateway-service/          # Spring Cloud Gateway & Redis Rate Limiter (8080)
-│   ├── core-service/             # Core Business API, JWT Auth & Flyway Migrations (8081)
-│   └── ai-service/               # Gemini 3.5 Flash Multimodal Ingestion Worker (8082)
-├── render.yaml                   # 1-Click Render Blueprint Manifest
-├── docker-compose.yml            # Full-Stack Orchestration Manifest
-├── ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md # Detailed Engineering & System Design Doc
-└── README.md                     # Master Repository Overview
+│   ├── eureka-server/                  # Service Discovery Server (:8761)
+│   ├── gateway-service/                # Edge API Gateway & Rate Limiter (:8080)
+│   ├── core-service/                   # Core Business API & Database Persistence (:8081)
+│   ├── ai-service/                     # Gemini 3.5 Flash Ingestion Worker (:8082)
+│   └── BACKEND_ARCHITECTURE.md         # Master Backend Microservices Blueprint
+├── Problems/                           # Sample Ingestion Files (PDFs, notes, images)
+├── docker-compose.yml                  # Full-Stack Orchestration Manifest
+├── start-system.ps1                    # Local System Launch Script
+├── stop-system.ps1                     # Local System Termination Script
+├── ARCHITECTURE_DECISIONS_AND_SOLUTIONS.md # Architectural Design & Tradeoffs Doc
+└── README.md                           # Master Project Readme
 ```
 
 ---
 
-## License
+## 📄 7. License
 
-Distributed under the MIT License. Built for impact.
+Distributed under the MIT License. Built for social impact.
