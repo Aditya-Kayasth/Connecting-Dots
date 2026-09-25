@@ -147,7 +147,7 @@ Connecting-Dots-V2/
 │   ├── core-service/                   # Core Business API & Database Persistence (:8081)
 │   ├── ai-service/                     # Gemini 3.5 Flash Ingestion Worker (:8082)
 │   └── BACKEND_ARCHITECTURE.md         # Master Backend Microservices Blueprint
-├── Problems/                           # Sample Ingestion Files (PDFs, notes, images)
+├── Sample Problems/                    # Sample Ingestion Files (PDFs, notes, images)
 ├── docker-compose.yml                  # Full-Stack Orchestration Manifest
 ├── start-system.ps1                    # Local System Launch Script
 ├── stop-system.ps1                     # Local System Termination Script
