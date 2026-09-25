@@ -39,30 +39,26 @@ In Connecting Dots V2, `core-service` runs on port `8081` and connects to a serv
 The core service manages complex status transitions across problem statements and project applications.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> OPEN: NGO Uploads & AI Ingests Problem
+flowchart TD
+    Start([NGO Uploads Problem]) --> OPEN[Problem Status: OPEN]
     
-    state OPEN {
-        [*] --> PENDING: Contributor Applies
-        PENDING --> WITHDRAWN: Contributor Withdraws
-        WITHDRAWN --> PENDING: Contributor Re-applies
-    }
-    
-    OPEN --> IN_PROGRESS: NGO Accepts an Application
-    
-    state IN_PROGRESS {
-        note right of IN_PROGRESS
-            Accepting 1 application automatically
-            sets all other PENDING apps to REJECTED.
-        end note
-        ACCEPTED --> WITHDRAWN: Contributor Withdraws
-        ACCEPTED --> REJECTED: NGO Rejects
-    }
-    
-    IN_PROGRESS --> OPEN: All Accepted Apps Withdrawn / Rejected
-    
-    IN_PROGRESS --> CLOSED: NGO Marks Application Completed
-    CLOSED --> [*]
+    subgraph OpenPhase["1. Open Phase"]
+        OPEN -->|Contributor Applies| PENDING[Application: PENDING]
+        PENDING -->|Contributor Withdraws| WITHDRAWN[Application: WITHDRAWN]
+        WITHDRAWN -->|Contributor Re-applies| PENDING
+    end
+
+    OPEN -->|NGO Accepts Application| IN_PROGRESS[Problem Status: IN_PROGRESS]
+
+    subgraph ExecutionPhase["2. Execution Phase"]
+        IN_PROGRESS --> ACCEPTED[Application: ACCEPTED]
+        ACCEPTED -->|Auto-Reject Rivals| REJECTED[Other Apps: REJECTED]
+        ACCEPTED -->|Accepted App Withdrawn or Rejected| CheckRemaining{Any Accepted App Left?}
+        CheckRemaining -->|No| OPEN
+    end
+
+    IN_PROGRESS -->|NGO Marks Complete| CLOSED[Problem Status: CLOSED]
+    CLOSED --> Finish([Project Completed & Reputation Stat Incremented])
 ```
 
 ### Business Logic Highlights
