@@ -387,7 +387,7 @@ export default function NgoWorkspace() {
               gap: '0.5rem',
               borderRadius: '4px'
             }}>
-              <strong style={{ fontSize: '1rem', color: '#775b20' }}>👀 Demo Account — Read-Only View</strong>
+              <strong style={{ fontSize: '1rem', color: '#775b20' }}>Demo Account — Read-Only View</strong>
               <p style={{ margin: 0, color: '#775b20', fontSize: '0.9rem', lineHeight: 1.55 }}>
                 This is a shared demo account. You can explore the workspace and see sample problem statements,
                 but you cannot upload documents, submit problems, or manage applications.

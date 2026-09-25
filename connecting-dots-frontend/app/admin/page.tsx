@@ -222,7 +222,7 @@ export default function AdminPage() {
             display: 'grid',
             gap: '0.35rem'
           }}>
-            <strong style={{ fontSize: '1rem', color: '#775b20' }}>👀 Demo Admin Account — Read-Only View</strong>
+            <strong style={{ fontSize: '1rem', color: '#775b20' }}>Demo Admin Account — Read-Only View</strong>
             <p style={{ margin: 0, color: '#775b20', fontSize: '0.88rem', lineHeight: 1.5 }}>
               You are signed in using the shared Demo Admin account (<code>{sessionEmail}</code>). You can inspect platform metrics and directory lists, but you cannot verify NGOs or remove users.
             </p>
