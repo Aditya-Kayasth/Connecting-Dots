@@ -1,10 +1,10 @@
-# Connecting Dots V2 — Master Microservices Backend Architecture
+# 🏛️ Connecting Dots V2 — Master Microservices Backend Architecture
 
 Welcome to the master technical architecture guide for **Connecting Dots V2**. This document provides an executive blueprint of the 4-microservice backend architecture, detailing service interaction patterns, security boundaries, database structures, and asynchronous data flows.
 
 ---
 
-## 1. System Topology & Architecture Overview
+## 🌐 1. System Topology & Architecture Overview
 
 Connecting Dots V2 is built around a decoupled **4-microservice backend architecture** engineered for scalable civic technology matching between NGOs and technical contributors.
 
@@ -12,7 +12,7 @@ Connecting Dots V2 is built around a decoupled **4-microservice backend architec
 graph TD
     Client["Client App / Next.js Frontend"] -->|HTTP REST via Bearer JWT| GW["1. API Gateway (gateway-service:8080)"]
     
-    subgraph Service Discovery Mesh
+    subgraph ServiceDiscoveryMesh["Service Discovery Mesh"]
         Eureka["Eureka Discovery Server (eureka-server:8761)"]
         GW <-->|Dynamic Service Lookup| Eureka
         GW -->|lb://core-service| CS["2. Core Business Service (core-service:8081)"]
@@ -21,7 +21,7 @@ graph TD
         AI <-->|Heartbeat Ping| Eureka
     end
 
-    subgraph Data & Async Tier
+    subgraph DataAsyncTier["Data & Async Tier"]
         GW -->|Token Bucket Rate Limit| Redis[("Local Docker Redis")]
         CS -->|JDBC / JPA Transactions| DB[("Neon PostgreSQL")]
         CS -->|Publish Ingestion Event| QStash["Upstash QStash Queue"]
@@ -33,7 +33,7 @@ graph TD
 
 ---
 
-## 2. Microservice Matrix
+## 📊 2. Microservice Matrix
 
 | Service Name | Port | Primary Responsibilities | Core Technologies |
 | :--- | :--- | :--- | :--- |
@@ -44,7 +44,7 @@ graph TD
 
 ---
 
-## 3. End-to-End Asynchronous Ingestion Data Flow
+## 🔄 3. End-to-End Asynchronous Ingestion Data Flow
 
 ```mermaid
 sequenceDiagram
@@ -75,15 +75,15 @@ sequenceDiagram
 
 ---
 
-## 4. Key Architectural Patterns & Decisions
+## 💡 4. Key Architectural Patterns & Decisions
 
-### 1. Edge Gateway & Reactive Rate Limiting
+### 1. 🛡️ Edge Gateway & Reactive Rate Limiting
 All external request traffic enters through `gateway-service` on port `8080`. Downstream microservices (`8081`, `8082`) are isolated from direct external internet traffic. Redis token-bucket rate limiting enforces a limit of 10 requests per second with a burst capacity of 20 per client IP.
 
-### 2. Isolated Asynchronous AI Processing
+### 2. 🤖 Isolated Asynchronous AI Processing
 Document parsing and Gemini 3.5 Flash LLM calls take several seconds to execute. Placing AI extraction inside `ai-service` triggered via Upstash QStash webhooks ensures main user workflows (login, messaging, browsing) remain ultra-fast and unblocked.
 
-### 3. Application State Machine Integrity
+### 3. ⚙️ Application State Machine Integrity
 `core-service` enforces strict state transitions:
 * Accepting an application sets problem status to `IN_PROGRESS` and **automatically sets all other pending applications for that problem to `REJECTED`**.
 * If an accepted application is withdrawn or rejected, the problem status **reverts back to `OPEN`** if no other accepted application remains.
@@ -91,7 +91,7 @@ Document parsing and Gemini 3.5 Flash LLM calls take several seconds to execute.
 
 ---
 
-## 5. Service README Directory
+## 📁 5. Service README Directory
 
 Detailed technical documentation for each microservice is maintained within its respective project folder:
 

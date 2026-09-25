@@ -1,10 +1,10 @@
-# Next.js 16 Civic Tech Frontend Application (`connecting-dots-frontend`)
+# 💻 Next.js 16 Civic Tech Frontend Application (`connecting-dots-frontend`)
 
 The `connecting-dots-frontend` service is the user interface for **Connecting Dots V2**. Built on **Next.js 16 App Router** and **React 19**, it provides an intuitive, responsive civic technology platform connecting Non-Governmental Organizations (NGOs) with technical volunteer contributors.
 
 ---
 
-## 1. What is Next.js App Router Architecture?
+## ⚡ 1. What is Next.js App Router Architecture?
 
 **Next.js App Router** is a modern React framework designed around Server Components, client-side interactivity, file-based routing, and optimized layout trees.
 
@@ -12,7 +12,7 @@ The `connecting-dots-frontend` service is the user interface for **Connecting Do
 graph TD
     Client["User Browser"] -->|Navigates URL /app| AppRouter["Next.js 16 App Router"]
     
-    subgraph Component Architecture
+    subgraph ComponentArchitecture["Component Architecture"]
         AppRouter -->|Static Shell / SSR| ServerComp["Server Components (Layouts & SEO)"]
         AppRouter -->|Interactive State| ClientComp["Client Components ('use client')"]
     end
@@ -22,17 +22,17 @@ graph TD
 
 ### Key Architectural Concepts
 
-* **Server & Client Components**: Heavy page layouts render on the server for instant First Contentful Paint (FCP) and SEO optimization, while interactive forms, modals, and chat windows run as client components (`'use client'`).
-* **Centralized API Client**: Communicates exclusively through `gateway-service` on port `8080`, attaching stateless JWT Bearer tokens to all mutation requests.
-* **Responsive Civic Tech Design System**: Styled with Tailwind CSS v4 using modern civic tech colors (Deep Teal `#0F766E`, Warm Amber `#D97706`) and persistent dark/light theme switching (`next-themes`).
+* **⚡ Server & Client Components**: Heavy page layouts render on the server for instant First Contentful Paint (FCP) and SEO optimization, while interactive forms, modals, and chat windows run as client components (`'use client'`).
+* **🔑 Centralized API Client**: Communicates exclusively through `gateway-service` on port `8080`, attaching stateless JWT Bearer tokens to all mutation requests.
+* **🎨 Responsive Civic Tech Design System**: Styled with Tailwind CSS v4 using modern civic tech colors (Deep Teal `#0F766E`, Warm Amber `#D97706`) and persistent dark/light theme switching (`next-themes`).
 
 ---
 
-## 2. Implementation in Connecting Dots V2
+## ⚙️ 2. Implementation in Connecting Dots V2
 
 The frontend application runs on port `3000` and connects to the Spring Boot microservices backend via `gateway-service` (`http://localhost:8080`).
 
-### Application Architecture & Communications
+### 🔄 Application Architecture & Communications
 
 ```mermaid
 sequenceDiagram
@@ -56,7 +56,7 @@ sequenceDiagram
 
 ---
 
-## 3. Core Features & Key Components
+## 🚀 3. Core Features & Key Components
 
 ### 1. Centralized Bearer Token API Client (`lib/api-client.ts`)
 * Targets Spring Cloud Gateway (`http://localhost:8080`).
@@ -78,7 +78,7 @@ sequenceDiagram
 
 ---
 
-## 4. App Routes & Directory Structure
+## 📁 4. App Routes & Directory Structure
 
 ```
 app/
@@ -107,7 +107,7 @@ components/
 
 ---
 
-## 5. Technical Specifications
+## 📊 5. Technical Specifications
 
 | Parameter | Specification |
 | :--- | :--- |

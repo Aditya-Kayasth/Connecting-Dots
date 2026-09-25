@@ -1,10 +1,10 @@
-# API Gateway Microservice (`gateway-service`)
+# 🛡️ API Gateway Microservice (`gateway-service`)
 
 The `gateway-service` microservice acts as the single **Edge Entry Point** for the Connecting Dots microservices architecture. Built on reactive, non-blocking Spring Cloud Gateway, it controls traffic entry, enforces rate limiting, handles CORS security, and dynamically routes client requests to backend services.
 
 ---
 
-## 1. What is an API Gateway?
+## 🌐 1. What is an API Gateway?
 
 In a microservices architecture, client applications (such as web frontends or mobile apps) require access to multiple backend services. Directly exposing every microservice to the internet creates security vulnerabilities, CORS complications, and client-side coupling.
 
@@ -14,7 +14,7 @@ An **API Gateway** solves these challenges by acting as a reverse proxy and unif
 graph TD
     Client["Client Application / Frontend"] -->|Single HTTP Entry :8080| Gateway["API Gateway"]
     
-    subgraph Edge Responsibilities
+    subgraph EdgeResponsibilities["Edge Responsibilities"]
         Gateway -->|1. CORS Policy Check| Cors["CORS Security"]
         Gateway -->|2. Token Bucket Filter| RateLimit["Redis Rate Limiter"]
         Gateway -->|3. Registry Lookup| Discovery["Eureka Service Discovery"]
@@ -26,21 +26,21 @@ graph TD
 
 ### Core Responsibilities of an API Gateway
 
-* **Unified Routing**: Exposes a single public IP and port, mapping incoming endpoint paths to internal microservices.
-* **Traffic Control & Rate Limiting**: Protects downstream microservices from traffic surges and Denial-of-Service (DoS) attacks by throttling request rates per IP.
-* **Security & CORS Enforcement**: Handles Cross-Origin Resource Sharing policies in one central place instead of duplicating headers across every microservice.
-* **Dynamic Load Balancing**: Queries service registries (like Eureka) to resolve logical service names (`lb://service-name`) into container IP addresses.
+* **🎯 Unified Routing**: Exposes a single public IP and port, mapping incoming endpoint paths to internal microservices.
+* **⚡ Traffic Control & Rate Limiting**: Protects downstream microservices from traffic surges and Denial-of-Service (DoS) attacks by throttling request rates per IP.
+* **🔐 Security & CORS Enforcement**: Handles Cross-Origin Resource Sharing policies in one central place instead of duplicating headers across every microservice.
+* **🔄 Dynamic Load Balancing**: Queries service registries (like Eureka) to resolve logical service names (`lb://service-name`) into container IP addresses.
 
 ---
 
-## 2. Implementation in Connecting Dots V2
+## ⚙️ 2. Implementation in Connecting Dots V2
 
 In the Connecting Dots ecosystem, `gateway-service` runs as a high-throughput, non-blocking reactive server powered by **Spring Cloud Gateway** and **Project Reactor (Netty)** on port `8080`.
 
 > [!NOTE]
 > All incoming frontend requests from Next.js target port `8080`. External clients never communicate directly with `core-service` (`8081`) or `ai-service` (`8082`).
 
-### System Architecture Flow
+### 🔄 System Architecture Flow
 
 ```mermaid
 sequenceDiagram
@@ -64,7 +64,7 @@ sequenceDiagram
 
 ---
 
-## 3. Route Mapping Matrix
+## 🗺️ 3. Route Mapping Matrix
 
 The gateway maps incoming requests using path-based predicates and forwards them using Spring Cloud Eureka load balancer URIs (`lb://` scheme):
 
@@ -79,7 +79,7 @@ The gateway maps incoming requests using path-based predicates and forwards them
 
 ---
 
-## 4. Key Configurations & Rate Limiting
+## 🔒 4. Key Configurations & Rate Limiting
 
 ### Reactive Redis Token-Bucket Rate Limiter
 
@@ -144,7 +144,7 @@ eureka:
 
 ---
 
-## 5. Technical Specifications
+## 📊 5. Technical Specifications
 
 | Parameter | Specification |
 | :--- | :--- |

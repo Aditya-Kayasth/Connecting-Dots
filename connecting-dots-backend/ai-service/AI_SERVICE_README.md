@@ -1,10 +1,10 @@
-# Gemini AI Microservice (`ai-service`)
+# 🤖 Gemini AI Microservice (`ai-service`)
 
 The `ai-service` microservice is an asynchronous processing worker responsible for artificial intelligence operations within the Connecting Dots platform. Powered by **Spring AI 2.0.0** and **Google Gemini 3.5 Flash**, it parses unstructured documents (PDFs, handwritten notes, audio transcripts) uploaded by NGOs and structures them into actionable engineering briefs.
 
 ---
 
-## 1. What is Spring AI & Asynchronous LLM Processing?
+## ⚡ 1. What is Spring AI & Asynchronous LLM Processing?
 
 ### Understanding Spring AI
 
@@ -23,20 +23,20 @@ Large Language Model (LLM) operations and multimodal document parsing take sever
 
 Decoupling AI operations into an **asynchronous worker service** provides:
 
-* **Non-Blocking Architecture**: Web API controllers respond immediately (`201 Created` / `200 OK`), while heavy processing runs in background threads.
-* **Fault Isolation**: High CPU or memory consumption during document extraction does not slow down user logins, messaging, or browsing in `core-service`.
-* **Retry Resilience**: Queueing tasks allows failed processing attempts to be automatically retried without dropping user requests.
+* **⚡ Non-Blocking Architecture**: Web API controllers respond immediately (`201 Created` / `200 OK`), while heavy processing runs in background threads.
+* **🛡️ Fault Isolation**: High CPU or memory consumption during document extraction does not slow down user logins, messaging, or browsing in `core-service`.
+* **🔄 Retry Resilience**: Queueing tasks allows failed processing attempts to be automatically retried without dropping user requests.
 
 ---
 
-## 2. Implementation in Connecting Dots V2
+## ⚙️ 2. Implementation in Connecting Dots V2
 
 In Connecting Dots V2, `ai-service` runs on port `8082` and handles document parsing, domain classification, regional language translation, and automated problem structuring.
 
 > [!NOTE]
 > `ai-service` does not expose direct public web UI endpoints. It functions as an event-driven worker triggered by **Upstash QStash** HTTP webhooks.
 
-### Asynchronous AI Ingestion Pipeline
+### 🔄 Asynchronous AI Ingestion Pipeline
 
 ```mermaid
 sequenceDiagram
@@ -65,7 +65,7 @@ sequenceDiagram
 
 ---
 
-## 3. Data Payloads & Sequence Specifications
+## 📦 3. Data Payloads & Sequence Specifications
 
 ### 1. Ingestion Message Payload (Input from QStash)
 
@@ -94,7 +94,7 @@ After Gemini 3.5 Flash processes the document, `ai-service` sends the structured
 
 ---
 
-## 4. Key Components & Code Implementation
+## 🛠️ 4. Key Components & Code Implementation
 
 ### Asynchronous Handoff Controller (`AiController.java`)
 
@@ -155,7 +155,7 @@ public class AiProcessingService {
 
 ---
 
-## 5. Technical Specifications
+## 📊 5. Technical Specifications
 
 | Parameter | Specification |
 | :--- | :--- |

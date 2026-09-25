@@ -1,10 +1,10 @@
-# Core Business Microservice (`core-service`)
+# ⚙️ Core Business Microservice (`core-service`)
 
 The `core-service` microservice is the central transactional engine of the Connecting Dots platform. It manages user authentication, NGO and contributor profiles, problem statement lifecycles, project applications, application-isolated chat messaging threads, and community reviews.
 
 ---
 
-## 1. What is Core Business Logic in Spring Boot Architecture?
+## 🏗️ 1. What is Core Business Logic in Spring Boot Architecture?
 
 In an enterprise microservices ecosystem, the **Core Service** encapsulates the domain data models, business rules, security authorization boundaries, and transactional persistence logic.
 
@@ -20,21 +20,21 @@ graph TD
 
 ### Key Architectural Layers
 
-* **Controller Layer (`@RestController`)**: Handles HTTP requests, validates DTO payloads (`@Valid`), extracts SecurityContext claims, and maps response DTOs.
-* **Service Layer (`@Service`)**: Encapsulates core business rules, enforces role authorization checks, wraps multi-step updates in database transactions (`@Transactional`), and triggers external integration events.
-* **Repository Layer (`@Repository`)**: Interfaces with Spring Data JPA and Hibernate to execute type-safe SQL queries against the relational database.
-* **Database Layer**: Manages persistent domain entities (`User`, `ProblemStatement`, `Application`, `Message`) with ACID compliance.
+* **🎮 Controller Layer (`@RestController`)**: Handles HTTP requests, validates DTO payloads (`@Valid`), extracts SecurityContext claims, and maps response DTOs.
+* **🧠 Service Layer (`@Service`)**: Encapsulates core business rules, enforces role authorization checks, wraps multi-step updates in database transactions (`@Transactional`), and triggers external integration events.
+* **🗄️ Repository Layer (`@Repository`)**: Interfaces with Spring Data JPA and Hibernate to execute type-safe SQL queries against the relational database.
+* **💾 Database Layer**: Manages persistent domain entities (`User`, `ProblemStatement`, `Application`, `Message`) with ACID compliance.
 
 ---
 
-## 2. Implementation in Connecting Dots V2
+## ⚙️ 2. Implementation in Connecting Dots V2
 
 In Connecting Dots V2, `core-service` runs on port `8081` and connects to a serverless **Neon PostgreSQL** database with **Flyway** schema versioning.
 
 > [!NOTE]
 > `core-service` serves as the authoritative source of truth for platform state, user accounts, security tokens, and project lifecycle transitions.
 
-### Application Lifecycle State Machine
+### 🔄 Application Lifecycle State Machine
 
 The core service manages complex status transitions across problem statements and project applications.
 
@@ -86,7 +86,7 @@ Application 2 (Problem A + Contributor 2) ──> Thread app-uuid-2 (Isolated)
 
 ---
 
-## 3. Endpoints & API Matrix
+## 🗺️ 3. Endpoints & API Matrix
 
 | HTTP Method | Endpoint Path | Role Required | Description |
 | :--- | :--- | :--- | :--- |
@@ -107,7 +107,7 @@ Application 2 (Problem A + Contributor 2) ──> Thread app-uuid-2 (Isolated)
 
 ---
 
-## 4. Flyway Database Versioning Schema
+## 📁 4. Flyway Database Versioning Schema
 
 Flyway manages database migrations incrementally on service startup:
 
@@ -124,7 +124,7 @@ src/main/resources/db/migration/
 
 ---
 
-## 5. Technical Specifications
+## 📊 5. Technical Specifications
 
 | Parameter | Specification |
 | :--- | :--- |
