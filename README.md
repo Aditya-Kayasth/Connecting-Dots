@@ -18,9 +18,9 @@
 > * **Frontend Deployment**: Hosted on **Vercel**.
 > * **Backend Microservices Deployment**: Hosted on **Render** (Free Tier).
 > 
-> **Cold-Start Notice**: Free-tier cloud microservices on Render automatically spin down after 15 minutes of inactivity. When visiting the live application for the first time or after a period of inactivity, initial API requests may take **30 to 60 seconds** while backend containers complete their boot sequence.
+> **Cold-Start Notice**: Free-tier cloud microservices on Render automatically spin down after 15 minutes of inactivity. When visiting the live application for the first time or after a period of inactivity, initial API requests may take **4 to 5 minutes** while backend containers complete their cold-start boot sequence.
 > 
-> The application includes a live status banner (`BackendStatusBanner`) that monitors service connection states. **Please wait for all microservices to finish warming up before logging in or submitting forms.**
+> The application includes a live status banner (`BackendStatusBanner`) that monitors service connection states and shows an elapsed timer. **Please wait 4 to 5 minutes for all microservices to wake up before logging in or submitting forms.** Once awake, the platform works smoothly and fast!
 
 ---
 
@@ -42,25 +42,30 @@ The platform is architected around a **decoupled 4-microservice backend** paired
 
 ```mermaid
 flowchart TD
-    Client["Connecting Dots Frontend (Vercel / Next.js 16)"] -->|HTTP REST / JWT Bearer| GW["1. API Gateway (gateway-service:8080)"]
+    Client["🌐 Next.js 16 Frontend UI<br/>(Vercel • Port 3000)"]
+    
+    Client -->|HTTPS REST / Bearer JWT| GW["🚪 Spring Cloud Gateway<br/>(Port 8080)"]
+    GW --- Redis[("⚡ Redis Rate Limiter")]
 
-    subgraph ServiceDiscoveryMesh["Service Discovery Mesh"]
-        Eureka["Eureka Registry (eureka-server:8761)"]
-        GW <-->|Dynamic Lookup| Eureka
-        GW -->|lb://core-service| Core["2. Core Business Service (core-service:8081)"]
-        GW -->|lb://ai-service| AI["3. Gemini AI Worker (ai-service:8082)"]
-        Core <-->|Heartbeat| Eureka
-        AI <-->|Heartbeat| Eureka
-    end
+    Eureka["📡 Eureka Service Registry<br/>(Port 8761)"]
+    Core["⚙️ Core Business Service<br/>(Port 8081)<br/>• Auth & RBAC (JWT)<br/>• NGO & Contributor Logic<br/>• Project Applications"]
+    AI["🤖 Gemini AI Worker<br/>(Port 8082)<br/>• Multimodal OCR & Parsing<br/>• Regional Translation<br/>• Gemini 3.5 Flash LLM"]
 
-    subgraph DataAsyncTier["Data & Async Tier"]
-        GW -->|Token Bucket Rate Limit| Redis[("Local Docker Redis")]
-        Core -->|JPA Transactions| DB[("Neon Serverless PostgreSQL")]
-        Core -->|Publish Ingestion Task| QStash["Upstash QStash Queue"]
-        QStash -->|Async Webhook| AI
-        AI -->|Multimodal Gemini LLM| Gemini["Google Gemini 3.5 Flash"]
-        AI -->|PUT Callback /ai-update| Core
-    end
+    GW -->|/api/v1/core/**| Core
+    GW -->|/api/v1/ai/**| AI
+    GW -.->|Lookup| Eureka
+    Core -.->|Register| Eureka
+    AI -.->|Register| Eureka
+
+    DB[("🗄️ Neon PostgreSQL<br/>(ACID Persistence)")]
+    QStash["📨 Upstash QStash<br/>(Serverless Queue)"]
+    Gemini["✨ Google Gemini API<br/>(Multimodal Vision)"]
+
+    Core -->|JPA Transactions| DB
+    Core -->|1. Publish Task| QStash
+    QStash -->|2. Webhook Event| AI
+    AI -->|3. Multimodal Analysis| Gemini
+    AI -.->|4. Save Result /ai-update| Core
 ```
 
 ---
