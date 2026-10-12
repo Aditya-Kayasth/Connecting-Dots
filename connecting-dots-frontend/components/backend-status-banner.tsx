@@ -173,25 +173,57 @@ export default function BackendStatusBanner() {
           </h2>
 
           {/* Clear Notice Callout Box */}
-          <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-950/30 p-4 text-left">
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-950/30 p-3.5 text-left">
             <div className="flex items-start gap-3">
               <div className="text-amber-400 mt-0.5 text-base select-none">
                 ⏳
               </div>
-              <div className="text-xs text-slate-200 leading-relaxed space-y-1.5">
+              <div className="text-xs text-slate-200 leading-relaxed space-y-1">
                 <p className="font-semibold text-amber-300">
                   Please wait 4 to 5 minutes for the services to wake up
                 </p>
-                <p className="text-slate-300">
+                <p className="text-slate-300 text-[11px]">
                   Our backend microservices are hosted on Render&apos;s free
-                  tier. They spin down into sleep mode when idle and require a
-                  cold start.
-                </p>
-                <p className="text-emerald-300 font-medium pt-0.5">
-                  ✓ Please keep this page open. Once awakened, everything will
-                  work smoothly and perfectly!
+                  tier and spin down when idle. Once awake, everything works
+                  smoothly and fast!
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Demo Credentials & GitHub Repo Link Helper */}
+          <div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-950/35 p-3.5 text-left">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-semibold text-sky-300 flex items-center gap-1.5">
+                🔑 Instant Demo Credentials &amp; Profiles
+              </span>
+              <a
+                href="https://github.com/Aditya-Kayasth/Connecting-Dots"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-sky-400 hover:text-sky-300 underline underline-offset-2 font-medium flex items-center gap-0.5 transition-colors"
+              >
+                GitHub Repo ↗
+              </a>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed mb-2">
+              While waiting, check our GitHub README for complete demo accounts or sample registration profiles to do a real sign-up:
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-950/70 p-2.5 rounded-lg border border-white/10 font-mono">
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-sans font-semibold">Demo NGO</span>
+                <span className="text-emerald-400 select-all font-mono text-[11px] block truncate">ngo_demo@connectingdots.org</span>
+                <span className="text-slate-400 text-[10px] font-sans">pass: <code className="text-slate-200 select-all font-mono">password123</code></span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px] uppercase font-sans font-semibold">Demo Contributor</span>
+                <span className="text-emerald-400 select-all font-mono text-[11px] block truncate">contributor_demo@connectingdots.org</span>
+                <span className="text-slate-400 text-[10px] font-sans">pass: <code className="text-slate-200 select-all font-mono">password123</code></span>
+              </div>
+            </div>
+            <div className="mt-2 text-[10px] text-slate-400 flex items-center justify-between">
+              <span>Admin: <code className="text-slate-300 select-all font-mono">admin@connectingdots.org</code> / <code className="text-slate-300 select-all font-mono">Admin@1234</code></span>
+              <span className="text-slate-500 font-sans">Please test respectfully 🤝</span>
             </div>
           </div>
 

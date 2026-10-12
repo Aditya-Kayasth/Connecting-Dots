@@ -24,6 +24,47 @@
 
 ---
 
+## 🚀 Instant Access: Pre-Seeded Demo Accounts & Real Sign-Up Templates
+
+> [!TIP]
+> ### 🤝 Community Courtesy & Code of Conduct
+> These pre-seeded accounts are provided openly so anyone can explore and test Connecting Dots V2 immediately.  
+> **Please be a good community member**: do not delete existing project records, alter passwords, or create chaos for other testers. Treat the shared sandbox with care and respect!
+
+### 🔑 Instant Copy-Paste Demo Credentials
+You can log in directly using the **"Quick Demo Login"** buttons in the sign-in modal, or copy-paste these credentials:
+
+| Role | Email | Password | Pre-Configured Profile Details |
+| :--- | :--- | :--- | :--- |
+| **🏢 NGO Organization** | `ngo_demo@connectingdots.org` | `password123` | **Hope Foundation** (Education Technology • Global Community) |
+| **💻 Technical Contributor** | `contributor_demo@connectingdots.org` | `password123` | **Alex Morgan** (Senior Full-Stack Engineer • React, Java, AI) |
+| **🛡️ Platform Admin** | `admin@connectingdots.org` | `Admin@1234` | Full Platform Governance, Verification & Auditing |
+
+---
+
+### 📝 Want to Test Real Registration? (Sample Profile Data to Copy-Paste)
+If you prefer creating a fresh, personal account instead of using the shared demo credentials, use the **"Create account"** tab and copy-paste these realistic sample values:
+
+#### Option A: Sample NGO Organization Registration
+* **Organization Name**: `Marathwada Jal Vikas Foundation` *(or any realistic NGO name)*
+* **Primary Focus Domain**: `Environment & Sustainability` *(select from dropdown)*
+* **Contact Number**: `9823456789` *(10 digits)*
+* **Location / Region**: `Dharashiv, Maharashtra, India`
+* **Email**: `your.ngo@example.com`
+* **Password**: `YourPassword123!`
+
+#### Option B: Sample Technical Contributor Registration
+* **Full Name**: `Aarav Deshmukh`
+* **Role / Title**: `Senior Full-Stack & Android Engineer`
+* **Skills Summary**: `React, TypeScript, Java, Spring Boot, PostgreSQL, AI`
+* **Portfolio or GitHub URL**: `https://github.com/your-username`
+* **Contact Number**: `9822112233` *(10 digits)*
+* **Location / Region**: `Pune, Maharashtra, India`
+* **Email**: `your.email@example.com`
+* **Password**: `YourPassword123!`
+
+---
+
 ## 🌐 1. Platform Overview
 
 **Connecting Dots V2** is an enterprise-grade, microservices-driven civic technology platform engineered to match Non-Governmental Organizations (NGOs) with technical volunteer contributors (software engineers, data scientists, UX designers).
@@ -125,15 +166,30 @@ For rapid local testing on Windows systems using PowerShell:
 
 ---
 
-## 🔑 5. Seeded Demo Accounts
+## 🔑 5. Complete Seeded Demo & Sample Accounts Matrix
 
-The database includes pre-seeded accounts for instant platform testing:
+In addition to the quick-access accounts listed at the [top of this README](#-instant-access-pre-seeded-demo-accounts--real-sign-up-templates), the platform database includes full sample Maharashtra NGOs and technical contributors pre-seeded for realistic marketplace testing:
 
-| Role | Email | Password | Permissions & Features |
+### Core Platform Roles
+| Role | Email | Password | Pre-Configured Profile Details |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@connectingdots.org` | `Admin@1234` | Platform Governance, NGO Verification & Metrics |
-| **NGO** | `ngo_test@connectingdots.org` | `Ngo@1234` | Problem Creation, AI Document Ingestion & Matching |
-| **Contributor** | `contributor_test@connectingdots.org` | `Contributor@1234` | Project Exploration, Applying & 1-on-1 Messaging |
+| **System Admin** | `admin@connectingdots.org` | `Admin@1234` | Platform Governance, NGO Verification & Auditing |
+| **Demo NGO** | `ngo_demo@connectingdots.org` | `password123` | Hope Foundation (Education Technology) |
+| **Demo Contributor** | `contributor_demo@connectingdots.org` | `password123` | Alex Morgan (Senior Full-Stack Engineer) |
+
+### Sample Maharashtra Grassroots NGOs
+| Organization Name | Email | Password | Domain & Region |
+| :--- | :--- | :--- | :--- |
+| **Marathwada Jal Vikas Foundation** | `contact@jalvikas.org` | `JalVikas@2026` | Environment & Sustainability • Dharashiv |
+| **Netra Vikas Disability Welfare** | `info@netravikas.org` | `NetraVikas@2026` | Education Technology • Nashik & Sambhajinagar |
+| **Vidarbha Kisaan Empowerment Trust** | `contact@vidarbhakisaan.org` | `Kisaan@2026` | Community Development • Nagpur & Yavatmal |
+| **Baramati Gramin Shikshan Sanstha** | `info@baramatiedu.org` | `Baramati@2026` | Education Technology • Pune & Baramati |
+| **Solapur Mahila Bachat Gat Samiti** | `contact@solapurmahila.org` | `Solapur@2026` | Financial Inclusion • Solapur |
+
+### Sample Technical Contributors
+| Contributor Name | Email | Password | Role & Location |
+| :--- | :--- | :--- | :--- |
+| **Aarav Deshmukh** | `aarav.deshmukh@gmail.com` | `password123` | Senior Full-Stack & Android Engineer • Pune |
 
 ---
 
